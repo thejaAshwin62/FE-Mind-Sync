@@ -1,8 +1,14 @@
 {
+  "functions": {
+    "api/proxy.js": {
+      "memory": 128,
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "https://emb-service.onrender.com/api/v1/:path*"
+      "destination": "/api/proxy"
     },
     {
       "source": "/(.*)",

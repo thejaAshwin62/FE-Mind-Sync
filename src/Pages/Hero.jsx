@@ -22,6 +22,26 @@ const Hero = () => {
   const [showSuccess, setShowSuccess] = useState(false)
   const heroRef = useRef(null)
 
+  const [theme, setTheme] = useState("light")
+
+  useEffect(() => {
+    setMounted(true)
+    const currentTheme = localStorage.getItem("theme") || "light"
+    setTheme(currentTheme)
+    document.documentElement.setAttribute("data-theme", currentTheme)
+
+    const handleStorageChange = () => {
+      const updatedTheme = localStorage.getItem("theme") || "light"
+      setTheme(updatedTheme)
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
+  }, [])
+
+  
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -33,6 +53,7 @@ const Hero = () => {
       navigate("/sign-in")
     }
   }
+  
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value)
@@ -177,10 +198,13 @@ const Hero = () => {
   ]
 
   return (
-    <section
-      ref={heroRef}
-      className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50"
-    >
+<section
+  ref={heroRef}
+  className={`relative min-h-screen overflow-hidden ${
+    theme === "light"
+      ? "bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50"
+      : "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-900"
+  }`}>
       {/* Animated background elements */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 opacity-30">
@@ -201,7 +225,11 @@ const Hero = () => {
         <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-5 max-w-7xl">
+<div
+  className={`relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-5 max-w-7xl ${
+    theme === "light" ? "text-slate-900" : "text-white"
+  }`}
+>
        
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -214,27 +242,43 @@ const Hero = () => {
               className="space-y-6"
             >
               <div className="inline-block">
-                <BackgroundGradient className="p-[1px] rounded-full">
-                  <div className="px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm">
-                    <span className="text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <BackgroundGradient className="p-[1px] rounded-full">
+  <div
+    className={`px-4 py-2 rounded-full ${
+      theme === "light" ? "bg-white/90 backdrop-blur-sm" : "bg-gray-800/90 backdrop-blur-sm"
+    }`}
+  >
+                <span
+  className={`text-sm font-medium ${
+    theme === "light"
+      ? "bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+      : "font-slate-100"
+  }`}
+>
+
                       Revolutionary Camera Technology
-                    </span>
+                </span>
                   </div>
                 </BackgroundGradient>
               </div>
-
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-slate-900">
-                <span className="block mb-2">Transform Visual Data</span>
-                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Into Actionable Insights
-                </span>
-              </h1>
+              <span className={`block mb-2 ${theme === "light" ? "text-slate-900" : "text-slate-50"}`}>
+              Transform Visual Data
+              </span>
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Into Actionable Insights
+            </span>
+          </h1>
 
               <div className="py-4">
                 <TypewriterEffect words={words} className="text-2xl sm:text-3xl lg:text-4xl" />
               </div>
 
-              <p className="text-lg sm:text-xl text-slate-700 leading-relaxed max-w-2xl">
+              <p
+              className={`text-lg sm:text-xl leading-relaxed max-w-2xl ${
+                theme === "light" ? "text-slate-700" : "text-slate-50"
+                }`}
+                >
                 Our innovative camera captures your surroundings every 15 minutes, transforming visual data into
                 actionable insights. With its chatbot functionality, you can easily ask questions and receive instant
                 answers about your location and activities.
@@ -356,139 +400,218 @@ const Hero = () => {
 
           {/* Right Content - 5 columns on large screens */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="lg:col-span-5 flex justify-center items-center"
+  initial={{ opacity: 0, scale: 0.9 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ duration: 0.8, delay: 0.3 }}
+  className="lg:col-span-5 flex justify-center items-center"
+>
+  <CardContainer className="w-full max-w-md h-auto">
+    <CardBody
+      className={`backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-2xl relative overflow-hidden ${
+        theme === "light" ? "bg-white/80" : "bg-gray-800/80"
+      }`}
+    >
+      {/* Decorative elements */}
+      <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/10 rounded-full"></div>
+      <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-500/10 rounded-full"></div>
+
+      <CardItem translateZ={50} className="w-full h-full p-6">
+        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-6">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 z-10"></div>
+          <img
+            src={HeroImage || "/placeholder.svg"}
+            alt="Camera in action"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        <div className="space-y-4">
+          <h3
+            className={`text-xl font-bold ${
+              theme === "light" ? "text-slate-900" : "text-slate-50"
+            }`}
           >
-            <CardContainer className="w-full max-w-md h-auto">
-              <CardBody className="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-2xl relative overflow-hidden">
-                {/* Decorative elements */}
-                <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/10 rounded-full"></div>
-                <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-500/10 rounded-full"></div>
+            MindSync Camera
+          </h3>
+          <p className={`${theme === "light" ? "text-slate-600" : "text-slate-400"}`}>
+            Capture moments
+          </p>
 
-                <CardItem translateZ={50} className="w-full h-full p-6">
-                  <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-6">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 z-10"></div>
-                    <img
-                      src={HeroImage || "/placeholder.svg"}
-                      alt="Camera in action"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+          <div className="flex items-center space-x-2">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <svg
+                  key={star}
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-yellow-500"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            <span
+              className={`text-sm ${
+                theme === "light" ? "text-slate-600" : "text-slate-400"
+              }`}
+            >
+              4.9 (128 reviews)
+            </span>
+          </div>
+        </div>
+      </CardItem>
 
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-bold text-slate-900">MindSync Camera</h3>
-                    <p className="text-slate-600">
-                      Capture moments
-                    </p>
+      <CardItem
+  translateZ={100}
+  translateX={-40}
+  translateY={-40}
+  className="absolute top-0 left-0"
+>
+  <div className={`p-4 rounded-xl shadow-lg ${theme === "light" ? "bg-white border border-slate-200" : "bg-gray-800 border border-slate-700"}`}>
+    <h3
+      className={`text-sm font-medium flex items-center ${theme === "light" ? "text-slate-900" : "text-slate-50"}`}
+    >
+      <div className="w-3 h-3 bg-red-800 rounded-full mr-2 animate-pulse"></div>
+      <span>Capturing...</span>
+    </h3>
+    <div className="flex items-center space-x-2 mt-1">
+      <span className={`text-xs ${theme === "light" ? "text-slate-600" : "text-slate-400"}`}>
+        Every 15 minutes
+      </span>
+    </div>
+  </div>
+</CardItem>
 
-                    <div className="flex items-center space-x-2">
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg
-                            key={star}
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 text-yellow-500"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="text-sm text-slate-600">4.9 (128 reviews)</span>
-                    </div>
-                  </div>
-                </CardItem>
-
-                <CardItem translateZ={100} translateX={-40} translateY={-40} className="absolute top-0 left-0">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-lg">
-                    <h3 className="text-sm font-medium text-slate-900 flex items-center">
-                      <div className="w-3 h-3 bg-red-800 rounded-full mr-2 animate-pulse"></div>
-                      <span className="">Capturing...</span>
-                    </h3>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-xs text-slate-600">Every 15 minutes</span>
-                    </div>
-                  </div>
-                </CardItem>
-
-                <CardItem translateZ={80} translateX={40} translateY={40} className="absolute bottom-0 right-0">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-lg max-w-[200px]">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shrink-0">
-                        <span className="text-xs text-white">AI</span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs text-slate-600">
-                        You're at a cozy coffee shop, sipping drinks and sharing laughs with your friend Kratos 
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardItem>
-              </CardBody>
-            </CardContainer>
-          </motion.div>
+      <CardItem
+        translateZ={80}
+        translateX={40}
+        translateY={40}
+        className="absolute bottom-0 right-0"
+      >
+<div
+  className={`p-4 rounded-xl shadow-lg max-w-[200px] ${
+    theme === "light" ? "bg-white border border-slate-200" : "bg-gray-800 border border-slate-700"
+  }`}
+>
+  <div className="flex items-start space-x-3">
+    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shrink-0">
+      <span className="text-xs text-white">AI</span>
+    </div>
+    <div className="flex-1">
+      <p
+        className={`text-xs ${
+          theme === "light" ? "text-slate-600" : "text-slate-400"
+        }`}
+      >
+        You're at a cozy coffee shop, sipping drinks and sharing laughs with your friend Kratos 
+      </p>
+    </div>
+  </div>
+</div>
+      </CardItem>
+    </CardBody>
+  </CardContainer>
+</motion.div>
         </div>
 
         {/* Features Section */}
         <div id="features" className="mt-32">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Powerful Features</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Our camera combines cutting-edge hardware with intelligent software to deliver an unparalleled experience.
-            </p>
-          </div>
+  <div className="text-center mb-16">
+    <h2
+      className={`text-3xl sm:text-4xl font-bold mb-4 ${
+        theme === "light" ? "text-slate-900" : "text-slate-50"
+      }`}
+    >
+      Powerful Features
+    </h2>
+    <p
+      className={`text-lg max-w-2xl mx-auto ${
+        theme === "light" ? "text-slate-600" : "text-slate-400"
+      }`}
+    >
+      Our camera combines cutting-edge hardware with intelligent software to deliver an unparalleled experience.
+    </p>
+  </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    {features.map((feature, index) => (
+      <motion.div
+        key={index}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+        viewport={{ once: true }}
+      >
+        <HoverCard>
+          <HoverCardTrigger>
+            <div
+              className={`p-6 rounded-2xl backdrop-blur-sm transition-all cursor-pointer shadow-lg hover:shadow-xl group h-full ${
+                theme === "light"
+                  ? "bg-white/80 border border-slate-200 hover:bg-white"
+                  : "bg-gray-800/80 border border-slate-700"
+              }`}
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                {feature.icon}
+              </div>
+              <h3
+                className={`font-bold text-xl mb-2 ${
+                  theme === "light" ? "text-slate-900" : "text-slate-50"
+                }`}
               >
-                <HoverCard>
-                  <HoverCardTrigger>
-                    <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-sm hover:bg-white transition-all cursor-pointer border border-slate-200 shadow-lg hover:shadow-xl group h-full">
-                      <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        {feature.icon}
-                      </div>
-                      <h3 className="font-bold text-xl text-slate-900 mb-2">{feature.name}</h3>
-                      <p className="text-slate-600">{feature.description}</p>
-                    </div>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="bg-white border-slate-200 text-slate-900 p-4 shadow-xl rounded-xl w-80">
-                    <div className="space-y-6">
-                      <h4 className="font-bold text-lg">{feature.name}</h4>
-                      <p className="text-slate-600">{feature.description}</p>
-                      <div className="pt-2 border-t border-slate-100 ">
-                        <a href="#" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
-                          Learn more
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4 ml-1"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </a>
-                      </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+                {feature.name}
+              </h3>
+              <p
+                className={`${
+                  theme === "light" ? "text-slate-600" : "text-slate-400"
+                }`}
+              >
+                {feature.description}
+              </p>
+            </div>
+          </HoverCardTrigger>
+          <HoverCardContent
+            className={`p-4 shadow-xl rounded-xl w-80 ${
+              theme === "light"
+                ? "bg-white border-slate-200 text-slate-900"
+                : "bg-gray-800 border-slate-700 text-slate-50"
+            }`}
+          >
+            <div className="space-y-6">
+              <h4 className="font-bold text-lg">{feature.name}</h4>
+              <p>{feature.description}</p>
+              <div className="pt-2 border-t border-slate-100 ">
+                <a
+                  href="#"
+                  className={`flex items-center text-sm font-medium transition-colors ${
+                    theme === "light"
+                      ? "text-blue-600 hover:text-blue-700"
+                      : "text-blue-400 hover:text-blue-500"
+                  }`}
+                >
+                  Learn more
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 ml-1"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      </motion.div>
+    ))}
+  </div>
+</div>
 
         {/* Testimonials */}
         {/* <div id="testimonials" className="mt-32">
@@ -529,34 +652,45 @@ const Hero = () => {
 
         {/* Call to Action */}
         <div id="pricing" className="mt-32 text-center">
-          <BackgroundGradient className="inline-block p-[1px] rounded-2xl">
-            <div className="px-8 py-10 sm:px-12 sm:py-16 rounded-2xl bg-white/90 backdrop-blur-sm">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-                className="max-w-3xl mx-auto"
-              >
-                <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">
-                  Ready to transform how you capture your world?
-                </h2>
-                <p className="text-lg sm:text-xl text-slate-600 mb-8">
-                  Join thousands of users already experiencing the future of visual insights.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={handleAuthAction}
-                    className="px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all text-white font-medium text-lg shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transform hover:-translate-y-1"
-                  >
-                    {isSignedIn ? "Get Started Now" : "Start Your Journey"}
-                  </button>
-                 
-                </div>
-              </motion.div>
-            </div>
-          </BackgroundGradient>
+  <BackgroundGradient className="inline-block p-[1px] rounded-2xl">
+    <div
+      className={`px-8 py-10 sm:px-12 sm:py-16 rounded-2xl backdrop-blur-sm ${
+        theme === "light" ? "bg-white/90" : "bg-gray-800/90"
+      }`}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        viewport={{ once: true }}
+        className="max-w-3xl mx-auto"
+      >
+        <h2
+          className={`text-3xl sm:text-4xl font-bold mb-4 ${
+            theme === "light" ? "text-slate-900" : "text-slate-50"
+          }`}
+        >
+          Ready to transform how you capture your world?
+        </h2>
+        <p
+          className={`text-lg sm:text-xl mb-8 ${
+            theme === "light" ? "text-slate-600" : "text-slate-400"
+          }`}
+        >
+          Join thousands of users already experiencing the future of visual insights.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button
+            onClick={handleAuthAction}
+            className="px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all text-white font-medium text-lg shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transform hover:-translate-y-1"
+          >
+            {isSignedIn ? "Get Started Now" : "Start Your Journey"}
+          </button>
         </div>
+      </motion.div>
+    </div>
+  </BackgroundGradient>
+</div>
 
         {/* Footer */}
        <Footer/>

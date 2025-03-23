@@ -1,11 +1,24 @@
-import React, { useState, useRef, useEffect } from "react";
+"use client";
+
+import { useState, useRef, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useChat } from "../Context/ChatContext";
 import customFetch from "../utils/customFetch";
 import GlobalChatBot from "../Componenets/GlobalChatBot";
-import { BadgePlus } from "lucide-react";
-import { BotMessageSquare } from "lucide-react";
-import { BrainCircuit } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  BadgePlus,
+  BotMessageSquare,
+  BrainCircuit,
+  Send,
+  Mic,
+  MicOff,
+  Search,
+  Calendar,
+  Edit,
+  Trash2,
+  ChevronDown,
+} from "lucide-react";
 
 const ChatBot = () => {
   const { user } = useUser();
@@ -22,6 +35,8 @@ const ChatBot = () => {
     aiName,
     userName,
   } = useChat();
+
+  const [theme, setTheme] = useState("light");
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
@@ -37,6 +52,24 @@ const ChatBot = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef(null);
+  const menuRef = useRef(null);
+
+  // Theme detection
+  useEffect(() => {
+    const currentTheme = localStorage.getItem("theme") || "light";
+    setTheme(currentTheme);
+    document.documentElement.setAttribute("data-theme", currentTheme);
+
+    const handleStorageChange = () => {
+      const updatedTheme = localStorage.getItem("theme") || "light";
+      setTheme(updatedTheme);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   // Sample suggestions based on common queries
   const querySuggestions = [
@@ -78,7 +111,7 @@ const ChatBot = () => {
           return suggestion;
         });
       setSuggestions(filtered);
-      setShowSuggestions(true);
+      setShowSuggestions(filtered.length > 0);
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -99,6 +132,9 @@ const ChatBot = () => {
         !suggestionsRef.current.contains(event.target)
       ) {
         setShowSuggestions(false);
+      }
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(null);
       }
     };
 
@@ -139,30 +175,31 @@ const ChatBot = () => {
     setIsSidebarOpen(false);
   };
 
-  // Modify the formatDate function to be more detailed
+  // Format date for message display
   const formatDate = (date) => {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
     const messageDate = new Date(date);
-    const dayName = messageDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayName = messageDate.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
 
     if (messageDate.toDateString() === today.toDateString()) {
       return `Today · ${dayName}`;
     } else if (messageDate.toDateString() === yesterday.toDateString()) {
       return `Yesterday · ${dayName}`;
     } else {
-      return messageDate.toLocaleDateString('en-US', { 
-        weekday: 'long',
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      return messageDate.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     }
   };
 
-  // Modify the message creation in handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
@@ -246,12 +283,14 @@ const ChatBot = () => {
     }
   };
 
-  // Add this function to group messages by date
+  // Group messages by date
   const groupMessagesByDate = (messages) => {
     const groups = {};
-    
-    messages.forEach(message => {
-      const date = message.date ? new Date(message.date).toDateString() : new Date().toDateString();
+
+    messages.forEach((message) => {
+      const date = message.date
+        ? new Date(message.date).toDateString()
+        : new Date().toDateString();
       if (!groups[date]) {
         groups[date] = [];
       }
@@ -260,11 +299,11 @@ const ChatBot = () => {
 
     return Object.entries(groups).map(([date, messages]) => ({
       date,
-      messages
+      messages,
     }));
   };
 
-  // Add function to group chats by time period
+  // Group chats by time period
   const groupChatsByDate = (chats) => {
     const today = new Date();
     const yesterday = new Date(today);
@@ -299,7 +338,7 @@ const ChatBot = () => {
   // Group the chats
   const groupedChats = groupChatsByDate(chats);
 
-  // Add this function to handle chat type changes
+  // Handle chat type changes
   const handleChatTypeChange = (type) => {
     setChatType(type);
     setIsDropdownOpen(false);
@@ -308,7 +347,7 @@ const ChatBot = () => {
     }
   };
 
-  // Add this function to handle global chat clearing
+  // Handle global chat clearing
   const handleClearGlobalChat = () => {
     // Call the function from GlobalChatBot component
     if (window.handleClearGlobalChat) {
@@ -343,7 +382,7 @@ const ChatBot = () => {
     }
   }, []);
 
-  // Function to toggle speech recognition
+  // Toggle speech recognition
   const toggleListening = () => {
     if (!recognition) return;
 
@@ -356,13 +395,20 @@ const ChatBot = () => {
     }
   };
 
-  // Modify the sidebar render to include groups
   return (
-    <div className="h-[calc(100vh-64px)] bg-primary-50 flex flex-col md:flex-row md:pl-10 md:pr-10 ">
-      {/* Sidebar Toggle Button for Mobile - Updated positioning */}
+    <div
+      className={`h-[calc(100vh-64px)] flex flex-col md:flex-row ${
+        theme === "light" ? "bg-gray-50" : "bg-gray-900"
+      }`}
+    >
+      {/* Sidebar Toggle Button for Mobile */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="md:hidden fixed top-[14px] left-3 z-[1000] bg-primary-950 text-white p-2 rounded-md shadow-lg hover:bg-primary-800 transition-all"
+        className={`md:hidden fixed top-[14px] left-3 z-[1000] ${
+          theme === "light"
+            ? "bg-primary-950 hover:bg-primary-800"
+            : "bg-gray-700 hover:bg-gray-600"
+        } text-white p-2 rounded-md shadow-lg transition-all`}
         aria-label="Toggle Sidebar"
       >
         <svg
@@ -389,558 +435,309 @@ const ChatBot = () => {
         </svg>
       </button>
 
-      {/* Sidebar - Updated z-index */}
-      <div
-        className={`fixed md:static inset-y-0 left-0 transform ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 transition-transform duration-300 ease-in-out w-64 bg-white border-r border-gray-200 flex flex-col z-[999] h-full overflow-hidden`}
-      >
-        {/* Header Section - Fixed */}
-        <div className="flex-shrink-0 mt-16  md:mt-0 ">
-          {/* Chat Type Toggle */}
-          <div className="p-2 sm:p-4 border-b ">
-            <div className="dropdown w-full">
-              <label
-                tabIndex={0}
-                className="w-full btn bg-primary-50 text-primary-950 hover:bg-primary-100 flex justify-between items-center"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              >
-                <span>
-                  {chatType === "personal" ? (
-                    <div className="flex items-center gap-2">
-                      <BotMessageSquare />
-                      {`${aiName} Chat`}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <BrainCircuit />
-                      Global Chat
+      {/* Sidebar */}
+      <AnimatePresence>
+        {(isSidebarOpen || (!isSidebarOpen && window.innerWidth >= 768)) && (
+          <motion.div
+            initial={{ x: -300, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -300, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className={`fixed md:static inset-y-0 left-0 transform md:translate-x-0 transition-transform duration-300 ease-in-out w-72 flex flex-col z-[999] h-full overflow-hidden ${
+              theme === "light"
+                ? "bg-white border-r border-gray-200"
+                : "bg-gray-800 border-r border-gray-700"
+            }`}
+          >
+            {/* Header Section */}
+            <div className="flex-shrink-0 mt-16 md:mt-0">
+              {/* Chat Type Toggle */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="relative w-full">
+                  <button
+                    className={`w-full py-3 px-4 rounded-xl flex justify-between items-center ${
+                      theme === "light"
+                        ? "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                        : "bg-gray-700 text-gray-100 hover:bg-gray-600"
+                    }`}
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  >
+                    <span className="flex items-center gap-2">
+                      {chatType === "personal" ? (
+                        <>
+                          <BotMessageSquare
+                            size={18}
+                            className={
+                              theme === "light"
+                                ? "text-primary-600"
+                                : "text-primary-400"
+                            }
+                          />
+                          <span>{aiName} Chat</span>
+                        </>
+                      ) : (
+                        <>
+                          <BrainCircuit
+                            size={18}
+                            className={
+                              theme === "light"
+                                ? "text-indigo-600"
+                                : "text-indigo-400"
+                            }
+                          />
+                          <span>Global Chat</span>
+                        </>
+                      )}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform duration-300 ${
+                        isDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {isDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className={`absolute left-0 right-0 mt-2 rounded-xl shadow-lg overflow-hidden z-50 ${
+                          theme === "light"
+                            ? "bg-white border border-gray-200"
+                            : "bg-gray-700 border border-gray-600"
+                        }`}
+                      >
+                        <div className="py-1">
+                          <button
+                            className={`w-full px-4 py-3 text-left flex items-center gap-2 ${
+                              chatType === "personal"
+                                ? theme === "light"
+                                  ? "bg-primary-50 text-primary-700"
+                                  : "bg-gray-600 text-white"
+                                : theme === "light"
+                                ? "text-gray-700 hover:bg-gray-100"
+                                : "text-gray-200 hover:bg-gray-600"
+                            }`}
+                            onClick={() => handleChatTypeChange("personal")}
+                          >
+                            <BotMessageSquare size={18} />
+                            <span>{aiName} Chat</span>
+                          </button>
+                          <button
+                            className={`w-full px-4 py-3 text-left flex items-center gap-2 ${
+                              chatType === "global"
+                                ? theme === "light"
+                                  ? "bg-primary-50 text-primary-700"
+                                  : "bg-gray-600 text-white"
+                                : theme === "light"
+                                ? "text-gray-700 hover:bg-gray-100"
+                                : "text-gray-200 hover:bg-gray-600"
+                            }`}
+                            onClick={() => handleChatTypeChange("global")}
+                          >
+                            <BrainCircuit size={18} />
+                            <span>Global Chat</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* New Chat Button - Only in personal mode */}
+              {chatType === "personal" && (
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={createNewChat}
+                    className={`w-full px-4 py-3 rounded-xl transition-colors flex items-center justify-center gap-2 font-medium ${
+                      theme === "light"
+                        ? "bg-primary-600 hover:bg-primary-700 text-white"
+                        : "bg-primary-700 hover:bg-primary-600 text-white"
+                    }`}
+                  >
+                    <BadgePlus size={18} />
+                    <span>New Chat</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+              {chatType === "personal" && (
+                <div className="h-full">
+                  {/* Today's Chats */}
+                  {groupedChats.today.length > 0 && (
+                    <div className="mt-2">
+                      <div
+                        className={`px-4 py-2 text-xs font-semibold sticky top-0 z-10 flex items-center gap-2 ${
+                          theme === "light"
+                            ? "text-gray-500 bg-white/90 backdrop-blur-sm"
+                            : "text-gray-400 bg-gray-800/90 backdrop-blur-sm"
+                        }`}
+                      >
+                        <Calendar size={14} />
+                        <span>Today</span>
+                      </div>
+                      {groupedChats.today.map((chat) => (
+                        <ChatItem
+                          key={chat.id}
+                          chat={chat}
+                          isActive={chat.id === currentChatId}
+                          onSelect={() => handleChatSelect(chat.id)}
+                          onEdit={(title) => updateChatTitle(chat.id, title)}
+                          onDelete={() => deleteChat(chat.id)}
+                          theme={theme}
+                          showMenu={showMenu}
+                          setShowMenu={setShowMenu}
+                          editingChatId={editingChatId}
+                          setEditingChatId={setEditingChatId}
+                          editingTitle={editingTitle}
+                          setEditingTitle={setEditingTitle}
+                        />
+                      ))}
                     </div>
                   )}
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </label>
-              {isDropdownOpen && (
-                <ul
-                  tabIndex={0}
-                  className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-full mt-1 z-[1000] "
-                >
-                  <li>
-                    <a
-                      className={chatType === "personal" ? "active" : ""}
-                      onClick={() => {
-                        handleChatTypeChange("personal");
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      <h1
-                        className={
-                          chatType === "personal" ? "text-primary-50" : ""
-                        }
+
+                  {/* Yesterday's Chats */}
+                  {groupedChats.yesterday.length > 0 && (
+                    <div className="mt-2">
+                      <div
+                        className={`px-4 py-2 text-xs font-semibold sticky top-0 z-10 flex items-center gap-2 ${
+                          theme === "light"
+                            ? "text-gray-500 bg-white/90 backdrop-blur-sm"
+                            : "text-gray-400 bg-gray-800/90 backdrop-blur-sm"
+                        }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <BotMessageSquare />
-                          {`${aiName} Chat`}
-                        </div>
-                      </h1>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      className={chatType === "global" ? "active" : ""}
-                      onClick={() => {
-                        handleChatTypeChange("global");
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      <h1
-                        className={
-                          chatType === "global" ? "text-primary-50" : ""
-                        }
+                        <Calendar size={14} />
+                        <span>Yesterday</span>
+                      </div>
+                      {groupedChats.yesterday.map((chat) => (
+                        <ChatItem
+                          key={chat.id}
+                          chat={chat}
+                          isActive={chat.id === currentChatId}
+                          onSelect={() => handleChatSelect(chat.id)}
+                          onEdit={(title) => updateChatTitle(chat.id, title)}
+                          onDelete={() => deleteChat(chat.id)}
+                          theme={theme}
+                          showMenu={showMenu}
+                          setShowMenu={setShowMenu}
+                          editingChatId={editingChatId}
+                          setEditingChatId={setEditingChatId}
+                          editingTitle={editingTitle}
+                          setEditingTitle={setEditingTitle}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Last 7 Days */}
+                  {groupedChats.lastWeek.length > 0 && (
+                    <div className="mt-2">
+                      <div
+                        className={`px-4 py-2 text-xs font-semibold sticky top-0 z-10 flex items-center gap-2 ${
+                          theme === "light"
+                            ? "text-gray-500 bg-white/90 backdrop-blur-sm"
+                            : "text-gray-400 bg-gray-800/90 backdrop-blur-sm"
+                        }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <BrainCircuit />
-                          Global Chat
-                        </div>
-                      </h1>
-                    </a>
-                  </li>
-                </ul>
-              )}
-            </div>
-          </div>
-
-          {/* New Chat Button - Only in personal mode */}
-          {chatType === "personal" && (
-            <div className="p-2 sm:p-4 border-b">
-              <button
-                onClick={createNewChat}
-                className="w-full bg-primary-950 text-white px-4 py-2 rounded-md hover:bg-primary-800 transition-colors"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <BadgePlus />
-                  New Chat
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {chatType === "personal" && (
-            <div className="h-full">
-              {/* Today's Chats */}
-              {groupedChats.today.length > 0 && (
-                <div className="mt-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 sticky top-0 bg-white z-10">
-                    Today
-                  </div>
-                  {groupedChats.today.map((chat) => (
-                    <div
-                      key={chat.id}
-                      className={`p-3 hover:bg-gray-100 cursor-pointer flex justify-between items-center ${
-                        chat.id === currentChatId ? "bg-gray-100" : ""
-                      }`}
-                    >
-                      {editingChatId === chat.id ? (
-                        <input
-                          type="text"
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onBlur={async () => {
-                            if (editingTitle.trim()) {
-                              await updateChatTitle(
-                                chat.id,
-                                editingTitle.trim()
-                              );
-                            }
-                            setEditingChatId(null);
-                          }}
-                          onKeyDown={async (e) => {
-                            if (e.key === "Enter" && editingTitle.trim()) {
-                              await updateChatTitle(
-                                chat.id,
-                                editingTitle.trim()
-                              );
-                              setEditingChatId(null);
-                            }
-                          }}
-                          className="flex-1 mr-2 px-2 py-1 border rounded"
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          className="truncate flex-1 pr-2 text-gray-700"
-                          onClick={() => handleChatSelect(chat.id)}
-                        >
-                          {chat.title}
-                        </span>
-                      )}
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenu(showMenu === chat.id ? null : chat.id);
-                          }}
-                          className="text-gray-500 hover:text-gray-700 p-1 relative z-[1000]"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
-                        </button>
-
-                        {showMenu === chat.id && (
-                          <div
-                            className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[1001]"
-                            style={{
-                              top: "auto",
-                              right: "1rem",
-                            }}
-                          >
-                            <div className="py-1">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingChatId(chat.id);
-                                  setEditingTitle(chat.title);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                Edit Name
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteChat(chat.id);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                        <Calendar size={14} />
+                        <span>Last 7 Days</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Yesterday's Chats */}
-              {groupedChats.yesterday.length > 0 && (
-                <div className="mt-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 sticky top-0 bg-white z-10">
-                    Yesterday
-                  </div>
-                  {groupedChats.yesterday.map((chat) => (
-                    <div
-                      key={chat.id}
-                      className={`p-3 hover:bg-gray-100 cursor-pointer flex justify-between items-center ${
-                        chat.id === currentChatId ? "bg-gray-100" : ""
-                      }`}
-                    >
-                      {editingChatId === chat.id ? (
-                        <input
-                          type="text"
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onBlur={async () => {
-                            if (editingTitle.trim()) {
-                              await updateChatTitle(
-                                chat.id,
-                                editingTitle.trim()
-                              );
-                            }
-                            setEditingChatId(null);
-                          }}
-                          onKeyDown={async (e) => {
-                            if (e.key === "Enter" && editingTitle.trim()) {
-                              await updateChatTitle(
-                                chat.id,
-                                editingTitle.trim()
-                              );
-                              setEditingChatId(null);
-                            }
-                          }}
-                          className="flex-1 mr-2 px-2 py-1 border rounded"
-                          autoFocus
+                      {groupedChats.lastWeek.map((chat) => (
+                        <ChatItem
+                          key={chat.id}
+                          chat={chat}
+                          isActive={chat.id === currentChatId}
+                          onSelect={() => handleChatSelect(chat.id)}
+                          onEdit={(title) => updateChatTitle(chat.id, title)}
+                          onDelete={() => deleteChat(chat.id)}
+                          theme={theme}
+                          showMenu={showMenu}
+                          setShowMenu={setShowMenu}
+                          editingChatId={editingChatId}
+                          setEditingChatId={setEditingChatId}
+                          editingTitle={editingTitle}
+                          setEditingTitle={setEditingTitle}
                         />
-                      ) : (
-                        <span
-                          className="truncate flex-1 pr-2 text-gray-700"
-                          onClick={() => handleChatSelect(chat.id)}
-                        >
-                          {chat.title}
-                        </span>
-                      )}
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenu(showMenu === chat.id ? null : chat.id);
-                          }}
-                          className="text-gray-500 hover:text-gray-700 p-1 relative z-[1000]"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
-                        </button>
-
-                        {showMenu === chat.id && (
-                          <div
-                            className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[1001]"
-                            style={{
-                              top: "auto",
-                              right: "1rem",
-                            }}
-                          >
-                            <div className="py-1">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingChatId(chat.id);
-                                  setEditingTitle(chat.title);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                Edit Name
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteChat(chat.id);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )}
 
-              {/* Last 7 Days */}
-              {groupedChats.lastWeek.length > 0 && (
-                <div className="mt-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 sticky top-0 bg-white z-10">
-                    Last 7 Days
-                  </div>
-                  {groupedChats.lastWeek.map((chat) => (
-                    <div
-                      key={chat.id}
-                      className={`p-3 hover:bg-gray-100 cursor-pointer flex justify-between items-center ${
-                        chat.id === currentChatId ? "bg-gray-100" : ""
-                      }`}
-                    >
-                      {editingChatId === chat.id ? (
-                        <input
-                          type="text"
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onBlur={async () => {
-                            if (editingTitle.trim()) {
-                              await updateChatTitle(
-                                chat.id,
-                                editingTitle.trim()
-                              );
-                            }
-                            setEditingChatId(null);
-                          }}
-                          onKeyDown={async (e) => {
-                            if (e.key === "Enter" && editingTitle.trim()) {
-                              await updateChatTitle(
-                                chat.id,
-                                editingTitle.trim()
-                              );
-                              setEditingChatId(null);
-                            }
-                          }}
-                          className="flex-1 mr-2 px-2 py-1 border rounded"
-                          autoFocus
+                  {/* Older */}
+                  {groupedChats.older.length > 0 && (
+                    <div className="mt-2">
+                      <div
+                        className={`px-4 py-2 text-xs font-semibold sticky top-0 z-10 flex items-center gap-2 ${
+                          theme === "light"
+                            ? "text-gray-500 bg-white/90 backdrop-blur-sm"
+                            : "text-gray-400 bg-gray-800/90 backdrop-blur-sm"
+                        }`}
+                      >
+                        <Calendar size={14} />
+                        <span>Older</span>
+                      </div>
+                      {groupedChats.older.map((chat) => (
+                        <ChatItem
+                          key={chat.id}
+                          chat={chat}
+                          isActive={chat.id === currentChatId}
+                          onSelect={() => handleChatSelect(chat.id)}
+                          onEdit={(title) => updateChatTitle(chat.id, title)}
+                          onDelete={() => deleteChat(chat.id)}
+                          theme={theme}
+                          showMenu={showMenu}
+                          setShowMenu={setShowMenu}
+                          editingChatId={editingChatId}
+                          setEditingChatId={setEditingChatId}
+                          editingTitle={editingTitle}
+                          setEditingTitle={setEditingTitle}
                         />
-                      ) : (
-                        <span
-                          className="truncate flex-1 pr-2 text-gray-700"
-                          onClick={() => handleChatSelect(chat.id)}
-                        >
-                          {chat.title}
-                        </span>
-                      )}
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenu(showMenu === chat.id ? null : chat.id);
-                          }}
-                          className="text-gray-500 hover:text-gray-700 p-1 relative z-[1000]"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
-                        </button>
-
-                        {showMenu === chat.id && (
-                          <div
-                            className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[1001]"
-                            style={{
-                              top: "auto",
-                              right: "1rem",
-                            }}
-                          >
-                            <div className="py-1">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingChatId(chat.id);
-                                  setEditingTitle(chat.title);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                Edit Name
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteChat(chat.id);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Older */}
-              {groupedChats.older.length > 0 && (
-                <div className="mt-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 sticky top-0 bg-white z-10">
-                    Older
-                  </div>
-                  {groupedChats.older.map((chat) => (
-                    <div
-                      key={chat.id}
-                      className={`p-3 hover:bg-gray-100 cursor-pointer flex justify-between items-center ${
-                        chat.id === currentChatId ? "bg-gray-100" : ""
-                      }`}
-                    >
-                      {editingChatId === chat.id ? (
-                        <input
-                          type="text"
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onBlur={async () => {
-                            if (editingTitle.trim()) {
-                              await updateChatTitle(
-                                chat.id,
-                                editingTitle.trim()
-                              );
-                            }
-                            setEditingChatId(null);
-                          }}
-                          onKeyDown={async (e) => {
-                            if (e.key === "Enter" && editingTitle.trim()) {
-                              await updateChatTitle(
-                                chat.id,
-                                editingTitle.trim()
-                              );
-                              setEditingChatId(null);
-                            }
-                          }}
-                          className="flex-1 mr-2 px-2 py-1 border rounded"
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          className="truncate flex-1 pr-2 text-gray-700"
-                          onClick={() => handleChatSelect(chat.id)}
-                        >
-                          {chat.title}
-                        </span>
-                      )}
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenu(showMenu === chat.id ? null : chat.id);
-                          }}
-                          className="text-gray-500 hover:text-gray-700 p-1 relative z-[1000]"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
-                        </button>
-
-                        {showMenu === chat.id && (
-                          <div
-                            className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[1001]"
-                            style={{
-                              top: "auto",
-                              right: "1rem",
-                            }}
-                          >
-                            <div className="py-1">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingChatId(chat.id);
-                                  setEditingTitle(chat.title);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                Edit Name
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteChat(chat.id);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Footer Section - Fixed */}
-        <div className="flex-shrink-0 p-2 sm:p-4 border-t">
-          {chatType === "personal" ? (
-            <button
-              onClick={clearAllChats}
-              className="w-full text-red-500 px-4 py-2 rounded-md hover:bg-red-50 transition-colors text-sm"
-            >
-              Clear All Chats
-            </button>
-          ) : (
-            <button
-              onClick={handleClearGlobalChat}
-              className="w-full text-red-500 px-4 py-2 rounded-md hover:bg-red-50 transition-colors text-sm"
-            >
-              Clear Global Chat
-            </button>
-          )}
-        </div>
-      </div>
+            {/* Footer Section */}
+            <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700">
+              {chatType === "personal" ? (
+                <button
+                  onClick={clearAllChats}
+                  className={`w-full px-4 py-2 rounded-xl transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
+                    theme === "light"
+                      ? "text-red-500 hover:bg-red-50"
+                      : "text-red-400 hover:bg-gray-700"
+                  }`}
+                >
+                  <Trash2 size={16} />
+                  <span>Clear All Chats</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleClearGlobalChat}
+                  className={`w-full px-4 py-2 rounded-xl transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
+                    theme === "light"
+                      ? "text-red-500 hover:bg-red-50"
+                      : "text-red-400 hover:bg-gray-700"
+                  }`}
+                >
+                  <Trash2 size={16} />
+                  <span>Clear Global Chat</span>
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Overlay for mobile - Updated z-index */}
+      {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-[998] md:hidden"
@@ -954,75 +751,133 @@ const ChatBot = () => {
           // Personal Chat Content
           <div className="flex-1 flex flex-col h-full">
             {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-6 bg-gray-50">
-              {groupMessagesByDate(messages).map(({ date, messages: dateMessages }, groupIndex) => (
-                <div key={date} className="space-y-4">
-                  <div className="sticky top-0 z-10 flex items-center justify-center py-2">
-                    <div className="bg-primary-950/5 backdrop-blur-sm px-4 py-1.5 rounded-full border border-primary-950/10">
-                      <span className="text-sm font-medium text-primary-950">
-                        {formatDate(date)}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {dateMessages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`chat ${
-                        message.sender === "user" ? "chat-end" : "chat-start"
-                      }`}
-                    >
-                      <div className="chat-image avatar placeholder">
-                        <div
-                          className={`w-10 rounded-full ${
-                            message.sender === "user"
-                              ? "bg-blue-500 text-white"
-                              : "bg-primary-950 text-white"
-                          }`}
-                        >
-                          <span>
-                            {message.sender === "user" ? userName[0] : aiName[0]}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="chat-header mb-1 text-gray-600">
-                        {message.sender === "user" ? userName : aiName}
-                        {message.timestamp && (
-                          <time className="text-xs opacity-50 ml-2">
-                            {message.timestamp}
-                          </time>
-                        )}
-                      </div>
+            <div
+              className={`flex-1 overflow-y-auto p-4 space-y-6 ${
+                theme === "light" ? "bg-gray-50" : "bg-gray-900"
+              }`}
+            >
+              {groupMessagesByDate(messages).map(
+                ({ date, messages: dateMessages }, groupIndex) => (
+                  <div key={date} className="space-y-4">
+                    <div className="sticky top-0 z-10 flex items-center justify-center py-2">
                       <div
-                        className={`chat-bubble ${
-                          message.sender === "user"
-                            ? "bg-blue-500 text-white"
-                            : "bg-white text-gray-800 border border-gray-200"
+                        className={`backdrop-blur-sm px-4 py-1.5 rounded-full ${
+                          theme === "light"
+                            ? "bg-primary-50 border border-primary-100"
+                            : "bg-gray-800 border border-gray-700"
                         }`}
                       >
-                        {message.sender === "bot" && message.userQuery && (
-                          <div className="text-sm text-gray-500 mb-2">
-                            <h1 className="font-medium bg-blue-500 text-white px-2 py-1 rounded-md">
-                              You asked: {message.userQuery}
-                            </h1>
-                          </div>
-                        )}
-                        {message.content}
+                        <span
+                          className={`text-sm font-medium ${
+                            theme === "light"
+                              ? "text-primary-800"
+                              : "text-gray-200"
+                          }`}
+                        >
+                          {formatDate(date)}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ))}
-              
+
+                    {dateMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`chat ${
+                          message.sender === "user" ? "chat-end" : "chat-start"
+                        }`}
+                      >
+                        <div className="chat-image avatar placeholder">
+                          <div
+                            className={`w-10 rounded-full ${
+                              message.sender === "user"
+                                ? "bg-blue-500 text-white"
+                                : theme === "light"
+                                ? "bg-primary-600 text-white"
+                                : "bg-primary-800 text-white"
+                            }`}
+                          >
+                            <span>
+                              {message.sender === "user"
+                                ? userName[0]
+                                : aiName[0]}
+                            </span>
+                          </div>
+                        </div>
+                        <div
+                          className={`chat-header mb-1 ${
+                            theme === "light"
+                              ? "text-gray-600"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          {message.sender === "user" ? userName : aiName}
+                          {message.timestamp && (
+                            <time
+                              className={`text-xs opacity-50 ml-2 ${
+                                theme === "light"
+                                  ? "text-gray-600"
+                                  : "text-gray-300"
+                              }`}
+                            >
+                              {message.timestamp}
+                            </time>
+                          )}
+                        </div>
+                        <div
+                          className={`chat-bubble ${
+                            message.sender === "user"
+                              ? "bg-blue-500 text-white"
+                              : theme === "light"
+                              ? "bg-white text-gray-800 border border-gray-200"
+                              : "bg-gray-800 text-gray-200 border border-gray-700"
+                          }`}
+                        >
+                          {message.sender === "bot" && message.userQuery && (
+                            <div
+                              className={`text-sm mb-2 ${
+                                theme === "light"
+                                  ? "text-gray-500"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              <div className="font-medium bg-blue-500 text-white px-2 py-1 rounded-md">
+                                You asked: {message.userQuery}
+                              </div>
+                            </div>
+                          )}
+                          {message.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+
               {isTyping && (
                 <div className="chat chat-start">
                   <div className="chat-image avatar placeholder">
-                    <div className="bg-primary-950 text-white w-10 rounded-full">
-                      <span>AI</span>
+                    <div
+                      className={`w-10 rounded-full ${
+                        theme === "light"
+                          ? "bg-primary-600 text-white"
+                          : "bg-primary-800 text-white"
+                      }`}
+                    >
+                      <span>{aiName[0]}</span>
                     </div>
                   </div>
-                  <div className="chat-bubble bg-white text-gray-800 border border-gray-200">
-                    <span className="loading loading-dots loading-sm"></span>
+                  <div
+                    className={`chat-bubble ${
+                      theme === "light"
+                        ? "bg-white text-gray-800 border border-gray-200"
+                        : "bg-gray-800 text-gray-200 border border-gray-700"
+                    }`}
+                  >
+                    <div className="flex gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-150"></span>
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-300"></span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1030,7 +885,13 @@ const ChatBot = () => {
             </div>
 
             {/* Input Form */}
-            <div className="p-2 sm:p-4 bg-white border-t mt-auto relative">
+            <div
+              className={`p-4 border-t mt-auto relative ${
+                theme === "light"
+                  ? "bg-white border-gray-200"
+                  : "bg-gray-800 border-gray-700"
+              }`}
+            >
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <div className="relative flex-1">
                   <input
@@ -1038,106 +899,96 @@ const ChatBot = () => {
                     value={inputMessage}
                     onChange={handleInputChange}
                     placeholder="Ask about your memories..."
-                    className="input input-bordered w-full bg-white focus:bg-white text-black min-w-0"
+                    className={`w-full px-4 py-3 rounded-xl border ${
+                      theme === "light"
+                        ? "bg-white border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 text-gray-800 placeholder-gray-400"
+                        : "bg-gray-700 border-gray-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-700 text-gray-100 placeholder-gray-500"
+                    } focus:outline-none transition-all`}
                   />
                   {/* Suggestions Dropdown */}
-                  {showSuggestions && suggestions.length > 0 && (
-                    <div
-                      ref={suggestionsRef}
-                      className="absolute bottom-full left-0 w-full bg-white border rounded-md shadow-lg mb-1 max-h-48 overflow-y-auto z-50"
-                    >
-                      {suggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-gray-700"
-                          onClick={() => handleSuggestionClick(suggestion)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {suggestion}
+                  <AnimatePresence>
+                    {showSuggestions && suggestions.length > 0 && (
+                      <motion.div
+                        ref={suggestionsRef}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className={`absolute bottom-full left-0 w-full rounded-xl shadow-lg mb-2 max-h-48 overflow-y-auto z-50 ${
+                          theme === "light"
+                            ? "bg-white border border-gray-200"
+                            : "bg-gray-700 border border-gray-600"
+                        }`}
+                      >
+                        {suggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className={`px-4 py-3 cursor-pointer flex items-center gap-2 ${
+                              theme === "light"
+                                ? "hover:bg-gray-100 text-gray-700"
+                                : "hover:bg-gray-600 text-gray-200"
+                            }`}
+                            onClick={() => handleSuggestionClick(suggestion)}
+                          >
+                            <Search
+                              size={14}
+                              className={
+                                theme === "light"
+                                  ? "text-gray-400"
+                                  : "text-gray-500"
+                              }
+                            />
+                            <span>{suggestion}</span>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Voice Input Button */}
                 <button
                   type="button"
                   onClick={toggleListening}
-                  className={`btn ${isListening ? "btn-error" : "btn"}`}
+                  className={`p-3 rounded-xl ${
+                    isListening
+                      ? "bg-red-500 text-white"
+                      : theme === "light"
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-gray-700 text-gray-200 hover:bg-gray-600"
+                  } transition-colors`}
                   title={isListening ? "Stop listening" : "Start voice input"}
                 >
-                  {isListening ? (
-                    // Microphone Active Icon
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 animate-pulse"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                      />
-                    </svg>
-                  ) : (
-                    // Microphone Inactive Icon
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 animate-pulse"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
-                      />
-                    </svg>
-                  )}
+                  {isListening ? <MicOff size={20} /> : <Mic size={20} />}
                 </button>
+
+                {/* Send Button */}
                 <button
                   type="submit"
-                  className="btn btn-primary"
                   disabled={!inputMessage.trim() || isTyping}
+                  className={`p-3 rounded-xl ${
+                    !inputMessage.trim() || isTyping
+                      ? theme === "light"
+                        ? "bg-gray-100 text-gray-400"
+                        : "bg-gray-700 text-gray-500"
+                      : theme === "light"
+                      ? "bg-primary-600 hover:bg-primary-700 text-white"
+                      : "bg-primary-700 hover:bg-primary-600 text-white"
+                  } transition-colors`}
                 >
                   {isTyping ? (
-                    <span className="loading loading-spinner loading-sm text-primary-50"></span>
+                    <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin"></div>
                   ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="w-6 h-6 text-primary-50 "
-                    >
-                      <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                    </svg>
+                    <Send size={20} />
                   )}
                 </button>
               </form>
               {/* Add a message when browser doesn't support speech recognition */}
               {!("webkitSpeechRecognition" in window) && (
-                <p className="text-xs text-red-500 mt-1">
+                <p
+                  className={`text-xs mt-2 text-center ${
+                    theme === "light" ? "text-red-500" : "text-red-400"
+                  }`}
+                >
                   Speech recognition is not supported in your browser. Please
                   use Chrome for this feature.
                 </p>
@@ -1148,6 +999,143 @@ const ChatBot = () => {
           // Global Chat Content
           <GlobalChatBot />
         )}
+      </div>
+    </div>
+  );
+};
+
+// Chat Item Component for sidebar
+const ChatItem = ({
+  chat,
+  isActive,
+  onSelect,
+  onEdit,
+  onDelete,
+  theme,
+  showMenu,
+  setShowMenu,
+  editingChatId,
+  setEditingChatId,
+  editingTitle,
+  setEditingTitle,
+}) => {
+  const handleEditSave = async () => {
+    if (editingTitle.trim()) {
+      await onEdit(editingTitle.trim());
+      setEditingChatId(null);
+    }
+  };
+
+  return (
+    <div
+      className={`p-3 cursor-pointer flex justify-between items-center ${
+        isActive ? (theme === "light" ? "bg-gray-100" : "bg-gray-700") : ""
+      } ${
+        theme === "light" ? "hover:bg-gray-100" : "hover:bg-gray-700"
+      } transition-colors`}
+    >
+      {editingChatId === chat.id ? (
+        <input
+          type="text"
+          value={editingTitle}
+          onChange={(e) => setEditingTitle(e.target.value)}
+          onBlur={handleEditSave}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleEditSave();
+            if (e.key === "Escape") setEditingChatId(null);
+          }}
+          className={`flex-1 mr-2 px-3 py-2 rounded-lg border ${
+            theme === "light"
+              ? "border-gray-200 focus:border-primary-500 bg-white text-gray-800"
+              : "border-gray-600 focus:border-primary-500 bg-gray-700 text-gray-200"
+          } focus:outline-none focus:ring-2 ${
+            theme === "light"
+              ? "focus:ring-primary-200"
+              : "focus:ring-primary-700"
+          }`}
+          autoFocus
+        />
+      ) : (
+        <span
+          className={`truncate flex-1 pr-2 ${
+            theme === "light" ? "text-gray-700" : "text-gray-200"
+          }`}
+          onClick={() => onSelect(chat.id)}
+        >
+          {chat.title}
+        </span>
+      )}
+      <div className="relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMenu(showMenu === chat.id ? null : chat.id);
+          }}
+          className={`p-2 rounded-lg ${
+            theme === "light"
+              ? "text-gray-500 hover:bg-gray-200"
+              : "text-gray-400 hover:bg-gray-600"
+          } transition-colors`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+          </svg>
+        </button>
+        <AnimatePresence>
+          {showMenu === chat.id && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.1 }}
+              className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50 overflow-hidden ${
+                theme === "light"
+                  ? "bg-white ring-1 ring-black ring-opacity-5"
+                  : "bg-gray-700 ring-1 ring-gray-600"
+              }`}
+              style={{ top: "auto", right: "1rem" }}
+            >
+              <div className="py-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingChatId(chat.id);
+                    setEditingTitle(chat.title);
+                    setShowMenu(null);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                    theme === "light"
+                      ? "text-gray-700 hover:bg-gray-100"
+                      : "text-gray-200 hover:bg-gray-600"
+                  }`}
+                >
+                  <Edit size={14} />
+                  <span>Rename</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                    setShowMenu(null);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                    theme === "light"
+                      ? "text-red-600 hover:bg-red-50"
+                      : "text-red-400 hover:bg-red-900/20"
+                  }`}
+                >
+                  <Trash2 size={14} />
+                  <span>Delete</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

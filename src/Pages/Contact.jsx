@@ -20,6 +20,7 @@ const Contact = () => {
     message: "",
   })
   const [errors, setErrors] = useState({})
+  const [theme, setTheme] = useState("light")
 
   // EmailJS configuration
   const serviceId = 'service_nkh3h2o'
@@ -31,6 +32,24 @@ const Contact = () => {
   // Initialize EmailJS
   useEffect(() => {
     emailjs.init(publicKey)
+  }, [])
+
+  useEffect(() => {
+    const currentTheme = localStorage.getItem("theme") || "light"
+    setTheme(currentTheme)
+    document.documentElement.setAttribute("data-theme", currentTheme)
+
+    const handleStorageChange = () => {
+      const updatedTheme = localStorage.getItem("theme") || "light"
+      setTheme(updatedTheme)
+      document.documentElement.setAttribute("data-theme", updatedTheme)
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
   }, [])
 
   // Words for typewriter effect
@@ -54,7 +73,7 @@ const Contact = () => {
           stroke="currentColor"
         >
           <path
-            strokeLinecap="round"contactInfo
+            strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
             d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
@@ -213,21 +232,26 @@ const Contact = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
+    <div
+      className={`min-h-screen overflow-hidden ${
+        theme === "light"
+          ? "bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50"
+          : "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-900 text-white"
+      }`}
+    >
+      <div className="absolute inset-0 z-0 opacity-30">
+        <SparklesCore
+          id="sparkles"
+          background="transparent"
+          minSize={1.5}
+          maxSize={5}
+          particleDensity={15}
+          particleColor={theme === "light" ? "#3b82f6" : "#60a5fa"}
+          particleSpeed={0.5}
+        />
+      </div>
       {/* Animated background */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 opacity-30">
-          <SparklesCore
-            id="contact-sparkles"
-            background="transparent"
-            minSize={0.4}
-            maxSize={1.5}
-            particleDensity={15}
-            particleColor="#3b82f6"
-            particleSpeed={0.2}
-          />
-        </div>
-
         {/* Gradient orbs */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
         <div className="absolute top-40 right-10 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -243,21 +267,28 @@ const Contact = () => {
             transition={{ duration: 0.8 }}
             className="mb-6"
           >
-            <TypewriterEffect words={words} className="text-3xl sm:text-4xl md:text-5xl font-bold" />
+            <TypewriterEffect
+              words={words}
+              className="text-3xl sm:text-4xl md:text-5xl font-bold"
+            />
           </motion.div>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg text-slate-700 max-w-2xl mx-auto leading-relaxed"
+            className={`text-lg max-w-2xl mx-auto leading-relaxed ${
+              theme === "light" ? "text-slate-700" : "text-slate-400"
+            }`}
           >
-            Have questions about our product or services? We'd love to hear from you. Fill out the form below and our
-            team will get back to you as soon as possible.
+            Have questions about our product or services? We'd love to hear from
+            you. Fill out the form below and our team will get back to you as
+            soon as possible.
           </motion.p>
         </div>
 
-        {/* Contact Information Cards - Above the form
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Contact Information Cards - Above the form
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -285,8 +316,6 @@ const Contact = () => {
             </CardContainer>
           ))}
         </motion.div> */}
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Contact Form - 8 columns on large screens */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -294,9 +323,23 @@ const Contact = () => {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="lg:col-span-8"
           >
-            <BackgroundGradient className="p-[1px] rounded-xl">
-              <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl">
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">Send Us a Message</h2>
+            <BackgroundGradient
+              className={`p-[1px] rounded-2xl ${
+                theme === "light" ? "" : "bg-slate-800"
+              }`}
+            >
+              <div
+                className={`${
+                  theme === "light" ? "bg-white" : "bg-slate-800"
+                } backdrop-blur-sm p-6 rounded-xl`}
+              >
+                <h2
+                  className={`text-2xl font-bold ${
+                    theme === "light" ? "text-slate-900" : "text-white"
+                  } mb-6`}
+                >
+                  Send Us a Message
+                </h2>
 
                 <AnimatePresence>
                   {showSuccess && (
@@ -318,7 +361,10 @@ const Contact = () => {
                           clipRule="evenodd"
                         />
                       </svg>
-                      <span>Your message has been sent successfully! We'll get back to you soon.</span>
+                      <span>
+                        Your message has been sent successfully! We'll get back
+                        to you soon.
+                      </span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -326,7 +372,14 @@ const Contact = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
+                      <label
+                        htmlFor="name"
+                        className={`block text-sm font-medium ${
+                          theme === "light"
+                            ? "text-slate-700"
+                            : "text-slate-300"
+                        } mb-1`}
+                      >
                         Your Name
                       </label>
                       <input
@@ -335,16 +388,29 @@ const Contact = () => {
                         name="name"
                         value={formState.name}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-lg bg-white border ${
-                          errors.name ? "border-red-500" : "border-slate-200 focus:border-blue-500"
+                        className={`w-full px-4 py-3 rounded-lg ${
+                          theme === "light"
+                            ? "bg-white border border-slate-200 focus:border-blue-500 text-slate-900"
+                            : "bg-slate-700 border border-slate-600 focus:border-blue-500 text-white"
                         } shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-base`}
                         placeholder="John Doe"
                       />
-                      {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.name}
+                        </p>
+                      )}
                     </div>
 
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                      <label
+                        htmlFor="email"
+                        className={`block text-sm font-medium ${
+                          theme === "light"
+                            ? "text-slate-700"
+                            : "text-slate-300"
+                        } mb-1`}
+                      >
                         Your Email
                       </label>
                       <input
@@ -353,17 +419,28 @@ const Contact = () => {
                         name="email"
                         value={formState.email}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-lg bg-white border ${
-                          errors.email ? "border-red-500" : "border-slate-200 focus:border-blue-500"
+                        className={`w-full px-4 py-3 rounded-lg ${
+                          theme === "light"
+                            ? "bg-white border border-slate-200 focus:border-blue-500 text-slate-900"
+                            : "bg-slate-700 border border-slate-600 focus:border-blue-500 text-white"
                         } shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-base`}
                         placeholder="john@example.com"
                       />
-                      {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                      {errors.email && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.email}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-slate-700 mb-1">
+                    <label
+                      htmlFor="subject"
+                      className={`block text-sm font-medium ${
+                        theme === "light" ? "text-slate-700" : "text-slate-300"
+                      } mb-1`}
+                    >
                       Subject
                     </label>
                     <input
@@ -372,16 +449,27 @@ const Contact = () => {
                       name="subject"
                       value={formState.subject}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 rounded-lg bg-white border ${
-                        errors.subject ? "border-red-500" : "border-slate-200 focus:border-blue-500"
+                      className={`w-full px-4 py-3 rounded-lg ${
+                        theme === "light"
+                          ? "bg-white border border-slate-200 focus:border-blue-500 text-slate-900"
+                          : "bg-slate-700 border border-slate-600 focus:border-blue-500 text-white"
                       } shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-base`}
                       placeholder="How can we help you?"
                     />
-                    {errors.subject && <p className="mt-1 text-sm text-red-500">{errors.subject}</p>}
+                    {errors.subject && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {errors.subject}
+                      </p>
+                    )}
                   </div>
 
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">
+                    <label
+                      htmlFor="message"
+                      className={`block text-sm font-medium ${
+                        theme === "light" ? "text-slate-700" : "text-slate-300"
+                      } mb-1`}
+                    >
                       Message
                     </label>
                     <textarea
@@ -390,12 +478,18 @@ const Contact = () => {
                       value={formState.message}
                       onChange={handleChange}
                       rows={6}
-                      className={`w-full px-4 py-3 rounded-lg bg-white border ${
-                        errors.message ? "border-red-500" : "border-slate-200 focus:border-blue-500"
+                      className={`w-full px-4 py-3 rounded-lg ${
+                        theme === "light"
+                          ? "bg-white border border-slate-200 focus:border-blue-500 text-slate-900"
+                          : "bg-slate-700 border border-slate-600 focus:border-blue-500 text-white"
                       } shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-base resize-none`}
                       placeholder="Tell us what you need help with..."
                     ></textarea>
-                    {errors.message && <p className="mt-1 text-sm text-red-500">{errors.message}</p>}
+                    {errors.message && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {errors.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -446,13 +540,27 @@ const Contact = () => {
             className="lg:col-span-4 space-y-6"
           >
             {/* Social Media Links */}
-            <BackgroundGradient className="p-[1px] rounded-xl">
-              <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Follow Us</h3>
+            <BackgroundGradient className="p-[1px] rounded-x2l">
+              <div
+                className={`${
+                  theme === "light" ? "bg-white/90" : "bg-slate-900/90"
+                } backdrop-blur-sm p-6 rounded-xl`}
+              >
+                <h3
+                  className={`text-lg font-semibold ${
+                    theme === "light" ? "text-slate-900" : "text-white"
+                  } mb-4`}
+                >
+                  Follow Us
+                </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <a
                     href="#"
-                    className="flex items-center justify-center p-3 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors group"
+                    className={`flex items-center justify-center p-3 rounded-lg transition-colors group ${
+                      theme === "light"
+                        ? "bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white"
+                    }`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -466,21 +574,31 @@ const Contact = () => {
                   </a>
                   <a
                     href="#"
-                    className="flex items-center justify-center p-3 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors group"
+                    className={`flex items-center justify-center p-3 rounded-lg transition-colors group ${
+                      theme === "light"
+                        ? "bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white"
+                    }`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
+                      width="16"
+                      height="16"
                       fill="currentColor"
-                      viewBox="0 0 24 24"
+                      class="bi bi-instagram"
+                      viewBox="0 0 16 16"
                     >
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                      <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334" />
                     </svg>
                     <span className="ml-2 font-medium text-sm">Instagram</span>
                   </a>
                   <a
                     href="#"
-                    className="flex items-center justify-center p-3 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors group"
+                    className={`flex items-center justify-center p-3 rounded-lg transition-colors group ${
+                      theme === "light"
+                        ? "bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white"
+                    }`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -492,20 +610,6 @@ const Contact = () => {
                     </svg>
                     <span className="ml-2 font-medium text-sm">LinkedIn</span>
                   </a>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center p-3 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors group"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                    </svg>
-                    <span className="ml-2 font-medium text-sm">GitHub</span>
-                  </a>
                 </div>
               </div>
             </BackgroundGradient>
@@ -513,10 +617,14 @@ const Contact = () => {
             {/* Office Hours */}
             <BackgroundGradient className="p-[1px] rounded-xl">
               <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Mind-Sync</h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                  Mind-Sync
+                </h3>
                 <ul className="space-y-3">
                   <li className="flex justify-between items-center p-3 rounded-lg bg-slate-50">
-                    <span className="text-slate-600 font-medium text-sm">Infinity</span>
+                    <span className="text-slate-600 font-medium text-sm">
+                      Infinity
+                    </span>
                     <span className="font-semibold text-slate-900 text-sm"></span>
                   </li>
                 </ul>
@@ -533,42 +641,122 @@ const Contact = () => {
           className="mt-16"
         >
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-3">Frequently Asked Questions</h2>
-            <p className="text-base text-slate-700 max-w-2xl mx-auto">
+            <h2
+              className={`text-2xl font-bold ${
+                theme === "light" ? "text-slate-900" : "text-white"
+              } mb-3`}
+            >
+              Frequently Asked Questions
+            </h2>
+            <p
+              className={`text-base max-w-2xl mx-auto ${
+                theme === "light" ? "text-slate-700" : "text-slate-400"
+              }`}
+            >
               Find answers to common questions about our products and services.
             </p>
           </div>
 
           <BackgroundGradient className="p-[1px] rounded-xl">
-            <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              className={`${
+                theme === "light" ? "bg-white/90" : "bg-slate-800/90"
+              } backdrop-blur-sm p-6 rounded-xl`}
+            >
+              <div className="grid grid-cols-4 md:grid-cols-2 gap-6 items-center ">
                 {/* FAQ items */}
                 <div className="space-y-4">
-                  <div className="p-4 rounded-lg bg-slate-50">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">How does the camera capture data?</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                      Our camera automatically captures images every 15 seconds, processing them through our AI system to
-                      convert visual data into actionable insights.
+                  <div
+                    className={`p-4 rounded-lg ${
+                      theme === "light" ? "bg-slate-50" : "bg-slate-700"
+                    }`}
+                  >
+                    <h3
+                      className={`text-lg font-bold ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      } mb-2`}
+                    >
+                      How does the camera capture data?
+                    </h3>
+                    <p
+                      className={`text-sm leading-relaxed ${
+                        theme === "light" ? "text-slate-600" : "text-slate-400"
+                      }`}
+                    >
+                      Our camera automatically captures images every 15 seconds,
+                      processing them through our AI system to convert visual
+                      data into actionable insights.
                     </p>
                   </div>
-                  <div className="p-4 rounded-lg bg-slate-50">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">Is my data secure and private?</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                    Absolutely! We follow strict privacy protocols and use Google Sign-In to keep your data secure. Your captured images are processed instantly — we don't store them anywhere. Your privacy is our top priority.
+                  <div
+                    className={`p-4 rounded-lg ${
+                      theme === "light" ? "bg-slate-50" : "bg-slate-700"
+                    }`}
+                  >
+                    <h3
+                      className={`text-lg font-bold ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      } mb-2`}
+                    >
+                      Is my data secure and private?
+                    </h3>
+                    <p
+                      className={`text-sm leading-relaxed ${
+                        theme === "light" ? "text-slate-600" : "text-slate-400"
+                      }`}
+                    >
+                      Absolutely! We follow strict privacy protocols and use
+                      Google Sign-In to keep your data secure. Your captured
+                      images are processed instantly — we don't store them
+                      anywhere. Your privacy is our top priority.
                     </p>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <div className="p-4 rounded-lg bg-slate-50">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">How long does the battery last?</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                    The ESP32-CAM supports lithium batteries, usually ranging from 1000mAh to 3000mAh. Battery life depends on factors like usage, camera activity, and power-saving modes, making it adaptable for various applications.
+                  <div
+                    className={`p-4 rounded-lg ${
+                      theme === "light" ? "bg-slate-50" : "bg-slate-700"
+                    }`}
+                  >
+                    <h3
+                      className={`text-lg font-bold ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      } mb-2`}
+                    >
+                      How long does the battery last?
+                    </h3>
+                    <p
+                      className={`text-sm leading-relaxed ${
+                        theme === "light" ? "text-slate-600" : "text-slate-400"
+                      }`}
+                    >
+                      The ESP32-CAM supports lithium batteries, usually ranging
+                      from 1000mAh to 3000mAh. Battery life depends on factors
+                      like usage, camera activity, and power-saving modes,
+                      making it adaptable for various applications.
                     </p>
                   </div>
-                  <div className="p-4 rounded-lg bg-slate-50">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">Can I integrate with other apps?</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                    Yes! We're working on providing API access to make integration with other apps seamless. This will allow you to connect and enhance your workflows effortlessly. Stay tuned for updates!
+                  <div
+                    className={`p-4 rounded-lg ${
+                      theme === "light" ? "bg-slate-50" : "bg-slate-700"
+                    }`}
+                  >
+                    <h3
+                      className={`text-lg font-bold ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      } mb-2`}
+                    >
+                      Can I integrate with other apps?
+                    </h3>
+                    <p
+                      className={`text-sm leading-relaxed ${
+                        theme === "light" ? "text-slate-600" : "text-slate-400"
+                      }`}
+                    >
+                      Yes! We're working on providing API access to make
+                      integration with other apps seamless. This will allow you
+                      to connect and enhance your workflows effortlessly. Stay
+                      tuned for updates!
                     </p>
                   </div>
                 </div>
@@ -576,14 +764,9 @@ const Contact = () => {
             </div>
           </BackgroundGradient>
         </motion.div>
-
-       
       </div>
-
-    
-    
     </div>
-  )
+  );
 }
 
 export default Contact

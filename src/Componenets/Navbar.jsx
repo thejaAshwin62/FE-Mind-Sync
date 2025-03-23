@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Logo from "../assets/Logo.svg";
 import { useAuth, useClerk } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router-dom";
+import ToggleButton from "./ToggleButton";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,6 +11,13 @@ const Navbar = () => {
   const { signOut } = useClerk();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [theme, setTheme] = useState("light");
+
+  useEffect(() => {
+    const currentTheme = localStorage.getItem("theme") || "light";
+    setTheme(currentTheme);
+    document.documentElement.setAttribute("data-theme", currentTheme);
+  }, []);
 
   const showToast = (message) => {
     const existingToast = document.querySelector(".toast");
@@ -27,7 +35,6 @@ const Navbar = () => {
     `;
     document.body.appendChild(toast);
 
-    // Remove toast after 3 seconds with fade effect
     setTimeout(() => {
       toast.style.transition = "opacity 0.5s ease-out";
       toast.style.opacity = "0";
@@ -61,12 +68,10 @@ const Navbar = () => {
   const handleMenuToggle = () => {
     if (!isMenuOpen) {
       setIsMenuOpen(true);
-      // Show logo after 1 second when menu opens
       setTimeout(() => {
         setIsLogoVisible(true);
       }, 250);
     } else {
-      // Immediately hide logo and close menu
       setTimeout(() => {
         setIsLogoVisible(false);
       }, 100);
@@ -74,83 +79,136 @@ const Navbar = () => {
     }
   };
 
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
+    window.location.reload(); // Refresh the page to apply the theme change
+  };
+
   return (
     <>
-      <section className="fixed top-0 left-0 right-0 bg-white z-[1000] min-h-[64px] ">
+      <section
+        className={`fixed top-0 left-0 right-0 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        } z-[1000] min-h-[64px]`}
+      >
         <div className="max-w-[2000px] mx-auto px-4 sm:px-6 md:px-10 h-16 flex items-center">
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center space-x-2">
               <Link to="/" className="flex items-center space-x-2">
-                <img src={Logo} alt="Logo" className="h-8 w-8 sm:h-10 sm:w-10" />
-                <span className="text-lg font-bold text-slate-900">MindSync</span>
+                <img
+                  src={Logo}
+                  alt="Logo"
+                  className="h-8 w-8 sm:h-10 sm:w-10"
+                />
+                <span
+                  className={`text-lg font-bold ${
+                    theme === "light" ? "text-slate-900" : "text-[#D6CDF9]"
+                  }`}
+                >
+                  MindSync
+                </span>
               </Link>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              className="lg:hidden text-secondary-950"
-              onClick={handleMenuToggle}
-            >
-              {!isMenuOpen ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              )}
-            </button>
+            <div className="flex items-center lg:hidden">
+              <ToggleButton onThemeChange={handleThemeChange} />
+              <button
+                className={`${
+                  theme === "light" ? "text-secondary-950" : "text-[#D6CDF9]"
+                } flex items-center gap-2 ml-2`}
+                onClick={handleMenuToggle}
+              >
+                {!isMenuOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
 
-            {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-10 ">
-              <ul className="flex gap-10 text-secondary-950 ">
+              <ul className="flex gap-10">
                 <Link to="/">
-                  <li className="hover:text-secondary-600 cursor-pointer transition-colors">
+                  <li
+                    className={`hover:text-secondary-600 cursor-pointer transition-colors ${
+                      theme === "light"
+                        ? "text-secondary-950"
+                        : "text-[#D6CDF9]"
+                    }`}
+                  >
                     Home
                   </li>
                 </Link>
                 <Link to="/about">
-                  <li className="hover:text-secondary-600 cursor-pointer transition-colors">
+                  <li
+                    className={`hover:text-secondary-600 cursor-pointer transition-colors ${
+                      theme === "light"
+                        ? "text-secondary-950"
+                        : "text-[#D6CDF9]"
+                    }`}
+                  >
                     About
                   </li>
                 </Link>
                 <Link to="/contact">
-                  <li className="hover:text-secondary-600 cursor-pointer transition-colors">
+                  <li
+                    className={`hover:text-secondary-600 cursor-pointer transition-colors ${
+                      theme === "light"
+                        ? "text-secondary-950"
+                        : "text-[#D6CDF9]"
+                    }`}
+                  >
                     Contact
                   </li>
                 </Link>
                 <Link to="/dashboard">
-                  <li className="hover:text-secondary-600 cursor-pointer transition-colors">
+                  <li
+                    className={`hover:text-secondary-600 cursor-pointer transition-colors ${
+                      theme === "light"
+                        ? "text-secondary-950"
+                        : "text-[#D6CDF9]"
+                    }`}
+                  >
                     Dashboard
                   </li>
                 </Link>
               </ul>
+              <div className="">
+                <ToggleButton onThemeChange={handleThemeChange} />
+              </div>
               <button
                 onClick={handleAuthAction}
-                className="bg-primary-950 text-white px-4 py-2 rounded-md hover:bg-primary-800 transition-colors min-w-[100px]"
+                className={`bg-primary-950 text-white px-4 py-2 rounded-md hover:bg-primary-800 transition-colors min-w-[100px] ${
+                  theme === "dark" ? "text-[#D6CDF9]" : ""
+                }`}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -163,16 +221,15 @@ const Navbar = () => {
               </button>
             </div>
 
-            {/* Mobile Navigation */}
             <div
               className={`
-                lg:hidden fixed inset-0 bg-white z-50 transition-transform duration-300 ease-in-out
+                lg:hidden fixed inset-0 ${
+                  theme === "light" ? "bg-white" : "bg-slate-900"
+                } z-50 transition-transform duration-300 ease-in-out
                 ${isMenuOpen ? "translate-x-0" : "translate-x-full"}
               `}
             >
-              {/* Close button and Logo container */}
               <div className="flex justify-between items-center p-4 border-b">
-                {/* Logo with transition */}
                 <div
                   className={`transition-opacity duration-500 ${
                     isLogoVisible ? "opacity-100" : "opacity-0"
@@ -183,7 +240,9 @@ const Navbar = () => {
                   </Link>
                 </div>
                 <button
-                  className="text-secondary-950 p-2 hover:bg-gray-100 rounded-full"
+                  className={`text-secondary-950 p-2 hover:bg-gray-100 rounded-full ${
+                    theme === "dark" ? "text-[#D6CDF9]" : ""
+                  }`}
                   onClick={handleMenuToggle}
                 >
                   <svg
@@ -203,26 +262,49 @@ const Navbar = () => {
                 </button>
               </div>
 
-              {/* Mobile Navigation Links */}
               <div className="flex flex-col h-full px-4 pt-6">
-                <ul className="flex flex-col gap-6 text-secondary-950 text-lg items-center">
+                <ul className="flex flex-col gap-6 text-lg items-center">
                   <Link to="/" onClick={handleMenuToggle}>
-                    <li className="hover:text-secondary-600 cursor-pointer transition-colors p-2">
+                    <li
+                      className={`hover:text-secondary-600 cursor-pointer transition-colors p-2 ${
+                        theme === "light"
+                          ? "text-secondary-950"
+                          : "text-[#D6CDF9]"
+                      }`}
+                    >
                       Home
                     </li>
                   </Link>
                   <Link to="/about" onClick={handleMenuToggle}>
-                    <li className="hover:text-secondary-600 cursor-pointer transition-colors p-2">
+                    <li
+                      className={`hover:text-secondary-600 cursor-pointer transition-colors p-2 ${
+                        theme === "light"
+                          ? "text-secondary-950"
+                          : "text-[#D6CDF9]"
+                      }`}
+                    >
                       About
                     </li>
                   </Link>
                   <Link to="/contact" onClick={handleMenuToggle}>
-                    <li className="hover:text-secondary-600 cursor-pointer transition-colors p-2">
+                    <li
+                      className={`hover:text-secondary-600 cursor-pointer transition-colors p-2 ${
+                        theme === "light"
+                          ? "text-secondary-950"
+                          : "text-[#D6CDF9]"
+                      }`}
+                    >
                       Contact
                     </li>
                   </Link>
                   <Link to="/dashboard" onClick={handleMenuToggle}>
-                    <li className="hover:text-secondary-600 cursor-pointer transition-colors p-2">
+                    <li
+                      className={`hover:text-secondary-600 cursor-pointer transition-colors p-2 ${
+                        theme === "light"
+                          ? "text-secondary-950"
+                          : "text-[#D6CDF9]"
+                      }`}
+                    >
                       Dashboard
                     </li>
                   </Link>
@@ -232,7 +314,9 @@ const Navbar = () => {
                     handleAuthAction();
                     handleMenuToggle();
                   }}
-                  className="mt-8 bg-primary-950 text-white px-4 py-2 rounded-md hover:bg-primary-800 transition-colors mx-auto min-w-[100px]"
+                  className={`mt-8 bg-primary-950 text-white px-4 py-2 rounded-md hover:bg-primary-800 transition-colors mx-auto min-w-[100px] ${
+                    theme === "dark" ? "text-[#D6CDF9]" : ""
+                  }`}
                 >
                   {isSignedIn ? "Sign Out" : "Sign In"}
                 </button>

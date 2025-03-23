@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BackgroundGradient } from "../ui/background-gradient";
@@ -8,6 +8,24 @@ import { TypewriterEffect } from "../ui/typewriter-effect";
 
 const About = () => {
   const containerRef = useRef(null);
+  const [theme, setTheme] = useState("light");
+
+  useEffect(() => {
+    const currentTheme = localStorage.getItem("theme") || "light";
+    setTheme(currentTheme);
+    document.documentElement.setAttribute("data-theme", currentTheme);
+
+    const handleStorageChange = () => {
+      const updatedTheme = localStorage.getItem("theme") || "light";
+      setTheme(updatedTheme);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   // Words for typewriter effect
   const words = [
@@ -85,20 +103,28 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
+    <div
+      className={`min-h-screen overflow-hidden ${
+        theme === "light"
+          ? "bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50"
+          : "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-900 text-white"
+      }`}
+    >
+      
+      <SparklesCore
+        id="sparkles"
+        background="transparent"
+        minSize={1.5}
+        maxSize={5}
+        particleDensity={15}
+        particleColor={theme === "light" ? "#3b82f6" : "#60a5fa"}
+        particleSpeed={0.5}
+        opacity={0.3}
+      />
+     
       {/* Animated background */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 opacity-30">
-          <SparklesCore
-            id="about-sparkles"
-            background="transparent"
-            minSize={0.4}
-            maxSize={1.5}
-            particleDensity={15}
-            particleColor="#3b82f6"
-            particleSpeed={0.2}
-          />
-        </div>
+       
 
         {/* Gradient orbs */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -125,7 +151,9 @@ const About = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg sm:text-xl text-slate-700 max-w-3xl mx-auto leading-relaxed"
+            className={`text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed ${
+              theme === "light" ? "text-slate-700" : "text-slate-400"
+            }`}
           >
             At MindSync, we're revolutionizing how people interact with their
             surroundings through cutting-edge camera technology and AI-powered
@@ -142,20 +170,36 @@ const About = () => {
           className="mb-24"
         >
           <BackgroundGradient className="p-[1px] rounded-2xl">
-            <div className="bg-white/90 backdrop-blur-sm p-8 sm:p-10 rounded-2xl">
+            <div
+              className={`${
+                theme === "light" ? "bg-white/90" : "bg-slate-800"
+              } backdrop-blur-sm p-8 sm:p-10 rounded-2xl overflow-hidden`}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
+                  <h2
+                    className={`text-2xl sm:text-3xl font-bold ${
+                      theme === "light" ? "text-slate-900" : "text-slate-50"
+                    } mb-4`}
+                  >
                     Our Mission
                   </h2>
-                  <p className="text-slate-700 mb-6">
+                  <p
+                    className={`text-slate-700 mb-6 ${
+                      theme === "light" ? "text-slate-700" : "text-white"
+                    }`}
+                  >
                     We believe that visual data is one of the most underutilized
                     resources in our daily lives. Our mission is to transform
                     how people capture, process, and interact with visual
                     information, making it more accessible, insightful, and
                     actionable.
                   </p>
-                  <p className="text-slate-700">
+                  <p
+                    className={`text-slate-700 ${
+                      theme === "light" ? "text-slate-700" : "text-white"
+                    }`}
+                  >
                     Through our innovative camera technology, we're building a
                     future where your surroundings become a rich source of
                     information that enhances your decision-making, creativity,
@@ -182,7 +226,9 @@ const About = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-3xl font-bold text-slate-900 mb-4"
+              className={`text-3xl font-bold ${
+                theme === "light" ? "text-slate-900" : "text-white"
+              } mb-4 `}
             >
               TEAM MEMBERS
             </motion.h2>
@@ -190,7 +236,9 @@ const About = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-lg text-slate-700 max-w-2xl mx-auto"
+              className={`text-lg max-w-2xl mx-auto ${
+                theme === "light" ? "text-slate-700" : "text-slate-400"
+              }`}
             >
               Passionate innovators dedicated to transforming how you experience
               and interact with your world.
@@ -206,7 +254,13 @@ const About = () => {
                 transition={{ duration: 0.5, delay: 0.1 * index }}
               >
                 <CardContainer className="w-full">
-                  <CardBody className="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-300 p-6 h-full">
+                  <CardBody
+                    className={`${
+                      theme === "light"
+                        ? "bg-white/80 border border-gray-100"
+                        : "bg-slate-800/80 border-none"
+                    } backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 h-full`}
+                  >
                     <CardItem translateZ={50} className="w-full">
                       <div className="aspect-square w-full mb-4 rounded-lg overflow-hidden">
                         <img
@@ -215,13 +269,27 @@ const About = () => {
                           className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                         />
                       </div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-1">
+                      <h3
+                        className={`text-xl font-bold ${
+                          theme === "light" ? "text-slate-900" : "text-white"
+                        } mb-1`}
+                      >
                         {member.name}
                       </h3>
-                      <p className="text-blue-600 font-medium mb-3">
+                      <p className={`font-medium mb-3 ${
+                        theme === "light" ? "text-blue-600" : "text-blue-400"
+                      }`}>
                         {member.role}
                       </p>
-                      <p className="text-slate-600 text-sm">{member.bio}</p>
+                      <p
+                        className={`${
+                          theme === "light"
+                            ? "text-slate-600"
+                            : "text-slate-300"
+                        } text-sm`}
+                      >
+                        {member.bio}
+                      </p>
                     </CardItem>
                   </CardBody>
                 </CardContainer>
@@ -237,7 +305,9 @@ const About = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-3xl font-bold text-slate-900 mb-4"
+              className={`text-3xl font-bold ${
+                theme === "light" ? "text-slate-900" : "text-white"
+              } mb-4`}
             >
               HOW IT WORKS
             </motion.h2>
@@ -245,7 +315,9 @@ const About = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-lg text-slate-700 max-w-2xl mx-auto"
+              className={`text-lg max-w-2xl mx-auto  ${
+                theme === "light" ? "text-slate-700" : "text-slate-400"
+              }`}
             >
               Key milestones that have shaped our path to innovation and
               excellence.
@@ -268,20 +340,36 @@ const About = () => {
                     index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
                   }`}
                 >
-                  <div className="flex-1 md:w-1/2 mb-4 md:mb-0">
+                  <div className="flex-1 md:w-1/2 mb-4 md:mb-0 ">
                     <BackgroundGradient
-                      className={`p-[1px] rounded-xl ${
+                      className={`p-[1px] rounded-xl  ${
                         index % 2 === 0 ? "md:mr-8" : "md:ml-8"
                       }`}
                     >
-                      <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl h-full">
+                      <div
+                        className={`${
+                          theme === "light"
+                            ? "bg-white/90 "
+                            : "bg-slate-800/90 "
+                        } backdrop-blur-sm rounded-xl p-6 h-full`}
+                      >
                         <div className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-600 font-medium text-sm mb-3">
                           {milestone.year}
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">
+                        <h3
+                          className={`text-xl font-bold ${
+                            theme === "light" ? "text-slate-900" : "text-white"
+                          } mb-2`}
+                        >
                           {milestone.title}
                         </h3>
-                        <p className="text-slate-600">
+                        <p
+                          className={`${
+                            theme === "light"
+                              ? "text-slate-600"
+                              : "text-slate-400"
+                          }`}
+                        >
                           {milestone.description}
                         </p>
                       </div>
@@ -307,13 +395,27 @@ const About = () => {
           className="mb-24"
         >
           <BackgroundGradient className="p-[1px] rounded-2xl">
-            <div className="bg-white/90 backdrop-blur-sm p-8 sm:p-10 rounded-2xl">
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8 text-center">
+            <div
+              className={`${
+                theme === "light" ? "bg-white/90" : "bg-slate-800/90"
+              } backdrop-blur-sm rounded-2xl p-8 sm:p-10`}
+            >
+              <h2
+                className={`text-2xl sm:text-3xl font-bold ${
+                  theme === "light" ? "text-slate-900" : "text-white"
+                } mb-8 text-center`}
+              >
                 Our Core Values
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="p-6 bg-blue-50 rounded-xl">
+                <div
+                  className={`${
+                    theme === "light"
+                      ? "bg-blue-50 border-gray-100"
+                      : "bg-slate-700 border-gray-100"
+                  } p-6 rounded-xl`}
+                >
                   <div className="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -330,17 +432,31 @@ const About = () => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  <h3
+                    className={`text-xl font-bold ${
+                      theme === "light" ? "text-slate-900" : "text-white"
+                    } mb-2`}
+                  >
                     Innovation
                   </h3>
-                  <p className="text-slate-700">
+                  <p
+                    className={`${
+                      theme === "light" ? "text-slate-700" : "text-slate-400"
+                    }`}
+                  >
                     We constantly push the boundaries of what's possible,
                     embracing new ideas and technologies to create breakthrough
                     solutions.
                   </p>
                 </div>
 
-                <div className="p-6 bg-indigo-50 rounded-xl">
+                <div
+                  className={`${
+                    theme === "light"
+                      ? "bg-indigo-50 border-gray-100"
+                      : "bg-slate-700 border-gray-100"
+                  } p-6 rounded-xl`}
+                >
                   <div className="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -357,17 +473,31 @@ const About = () => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  <h3
+                    className={`text-xl font-bold ${
+                      theme === "light" ? "text-slate-900" : "text-white"
+                    } mb-2`}
+                  >
                     User-Centered
                   </h3>
-                  <p className="text-slate-700">
+                  <p
+                    className={`${
+                      theme === "light" ? "text-slate-700" : "text-slate-400"
+                    }`}
+                  >
                     We design with empathy, putting our users' needs,
                     experiences, and feedback at the heart of everything we
                     create.
                   </p>
                 </div>
 
-                <div className="p-6 bg-purple-50 rounded-xl">
+                <div
+                  className={`${
+                    theme === "light"
+                      ? "bg-purple-50 border-gray-100"
+                      : "bg-slate-700 border-gray-100"
+                  } p-6 rounded-xl`}
+                >
                   <div className="w-12 h-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -384,10 +514,18 @@ const About = () => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  <h3
+                    className={`text-xl font-bold ${
+                      theme === "light" ? "text-slate-900" : "text-white"
+                    } mb-2`}
+                  >
                     Privacy & Trust
                   </h3>
-                  <p className="text-slate-700">
+                  <p
+                    className={`${
+                      theme === "light" ? "text-slate-700" : "text-slate-400"
+                    }`}
+                  >
                     We uphold the highest standards of data privacy and
                     security, ensuring our users can trust us with their
                     information.
@@ -405,10 +543,18 @@ const About = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">
+          <h2
+            className={`text-3xl font-bold ${
+              theme === "light" ? "text-slate-900" : "text-white"
+            } mb-4`}
+          >
             Ready to Join Our Journey?
           </h2>
-          <p className="text-lg text-slate-700 max-w-2xl mx-auto mb-8">
+          <p
+            className={`text-lg max-w-2xl mx-auto mb-8 ${
+              theme === "light" ? "text-slate-700" : "text-slate-400"
+            }`}
+          >
             Experience the future of visual data capture and analysis with
             MindSync.
           </p>
@@ -419,7 +565,13 @@ const About = () => {
               </button>
             </Link>
             <Link to="/contact">
-              <button className="px-8 py-4 rounded-xl bg-white hover:bg-slate-50 transition-all border border-slate-200 text-slate-900 font-medium text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              <button
+                className={`px-8 py-4 rounded-xl transition-all border shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
+                  theme === "light"
+                    ? "bg-white hover:bg-slate-50 border-slate-200 text-slate-900"
+                    : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
+                }`}
+              >
                 Contact Us
               </button>
             </Link>

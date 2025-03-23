@@ -1,37 +1,46 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+"use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
-
 import { useChat } from "../Context/ChatContext";
-
 import customFetch from "../utils/customFetch";
-
-import { getChatResponse, createNewChat } from "../utils/geminiService";
+import { createNewChat, getChatResponse } from "../utils/geminiService";
+import { motion } from "framer-motion";
+import { Send, Clock } from "lucide-react";
 
 const GlobalChatBot = () => {
   const { user } = useUser();
-
   const { aiName, userName } = useChat();
-
   const [inputMessage, setInputMessage] = useState("");
-
   const [isTyping, setIsTyping] = useState(false);
-
   const [messages, setMessages] = useState([]);
-
   const messagesEndRef = useRef(null);
+  const [chatInstance, setChatInstance] = useState(null);
+  const [theme, setTheme] = useState("light");
 
-  const [chatHistory, setChatHistory] = useState([]);
+  // Theme detection
+  useEffect(() => {
+    const currentTheme = localStorage.getItem("theme") || "light";
+    setTheme(currentTheme);
+    document.documentElement.setAttribute("data-theme", currentTheme);
+
+    const handleStorageChange = () => {
+      const updatedTheme = localStorage.getItem("theme") || "light";
+      setTheme(updatedTheme);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   // Initialize chat instance when component mounts
-  const [chatInstance, setChatInstance] = useState(null);
-
   useEffect(() => {
     setChatInstance(createNewChat());
   }, []);
 
   // Load messages from database
-
   useEffect(() => {
     const loadMessages = async () => {
       try {
@@ -41,10 +50,8 @@ const GlobalChatBot = () => {
           setMessages(response.data);
         } else {
           // Add welcome message if no messages exist
-
           const welcomeMessage = {
             id: Date.now().toString(),
-
             content: `👋 Hi ${userName}! I'm your ${aiName} AI Assistant powered by Google's Gemini.
 
 I can help you with:
@@ -60,19 +67,13 @@ I can help you with:
 🎨 Creative Ideas
 
 Feel free to ask me anything! I'm here to assist you.`,
-
             sender: "bot",
-
             timestamp: new Date().toISOString(),
-
             displayTime: new Date().toLocaleTimeString([], {
               hour: "2-digit",
-
               minute: "2-digit",
             }),
-
             userId: user?.id,
-
             userName: userName,
           };
 
@@ -92,35 +93,39 @@ Feel free to ask me anything! I'm here to assist you.`,
     }
   }, [user?.id, userName, aiName]);
 
-  // Add formatDate helper function
+  // Format date for message display
   const formatDate = (date) => {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
     const messageDate = new Date(date);
-    const dayName = messageDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayName = messageDate.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
 
     if (messageDate.toDateString() === today.toDateString()) {
       return `Today · ${dayName}`;
     } else if (messageDate.toDateString() === yesterday.toDateString()) {
       return `Yesterday · ${dayName}`;
     } else {
-      return messageDate.toLocaleDateString('en-US', { 
-        weekday: 'long',
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      return messageDate.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     }
   };
 
-  // Add groupMessagesByDate function
+  // Group messages by date
   const groupMessagesByDate = (messages) => {
     const groups = {};
-    
-    messages.forEach(message => {
-      const date = message.timestamp ? new Date(message.timestamp).toDateString() : new Date().toDateString();
+
+    messages.forEach((message) => {
+      const date = message.timestamp
+        ? new Date(message.timestamp).toDateString()
+        : new Date().toDateString();
       if (!groups[date]) {
         groups[date] = [];
       }
@@ -129,11 +134,10 @@ Feel free to ask me anything! I'm here to assist you.`,
 
     return Object.entries(groups).map(([date, messages]) => ({
       date,
-      messages
+      messages,
     }));
   };
 
-  // Modify handleSubmit to include full date
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || !chatInstance) return;
@@ -153,23 +157,18 @@ Feel free to ask me anything! I'm here to assist you.`,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-
     setInputMessage("");
-
     setIsTyping(true);
 
     try {
       // Save user message to database
-
       await customFetch.post(`/global-chat/${user.id}`, {
         message: userMessage,
       });
 
       // Get Gemini response using the chat service
-      const { text: botResponse, chatInstance: updatedChat } = await getChatResponse(
-        inputMessage,
-        chatInstance
-      );
+      const { text: botResponse, chatInstance: updatedChat } =
+        await getChatResponse(inputMessage, chatInstance);
 
       // Update chat instance if needed
       if (updatedChat) {
@@ -190,34 +189,25 @@ Feel free to ask me anything! I'm here to assist you.`,
       };
 
       // Save bot message to database
-
       await customFetch.post(`/global-chat/${user.id}`, {
         message: botMessage,
       });
 
       // Update local state
-
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Error:", error);
 
       const errorMessage = {
         id: Date.now().toString(),
-
         content: "I apologize, but I encountered an error. Please try again.",
-
         sender: "bot",
-
         timestamp: new Date().toISOString(),
-
         displayTime: new Date().toLocaleTimeString([], {
           hour: "2-digit",
-
           minute: "2-digit",
         }),
-
         userId: "bot",
-
         userName: aiName,
       };
 
@@ -231,12 +221,10 @@ Feel free to ask me anything! I'm here to assist you.`,
     }
   };
 
-  // Add this function to handle chat clearing
-
+  // Handle chat clearing
   const handleClearGlobalChat = async () => {
     try {
       await customFetch.delete(`/global-chat/${user.id}`);
-
       setMessages([]); // Clear messages locally
 
       // Create new chat instance
@@ -244,10 +232,8 @@ Feel free to ask me anything! I'm here to assist you.`,
       setChatInstance(newChatInstance);
 
       // Add welcome message after clearing
-
       const welcomeMessage = {
         id: Date.now().toString(),
-
         content: `👋 Hi ${userName}! I'm your ${aiName} AI Assistant powered by Google's Gemini.
 
 I can help you with:
@@ -263,19 +249,13 @@ I can help you with:
 🎨 Creative Ideas
 
 Feel free to ask me anything! I'm here to assist you.`,
-
         sender: "bot",
-
         timestamp: new Date().toISOString(),
-
         displayTime: new Date().toLocaleTimeString([], {
           hour: "2-digit",
-
           minute: "2-digit",
         }),
-
         userId: user?.id,
-
         userName: userName,
       };
 
@@ -290,7 +270,6 @@ Feel free to ask me anything! I'm here to assist you.`,
   };
 
   // Make handleClearGlobalChat available to parent component
-
   useEffect(() => {
     if (window) {
       window.handleClearGlobalChat = handleClearGlobalChat;
@@ -308,71 +287,115 @@ Feel free to ask me anything! I'm here to assist you.`,
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-64px)] md:h-full">
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-6 bg-gray-50">
-        {groupMessagesByDate(messages).map(({ date, messages: dateMessages }, groupIndex) => (
-          <div key={date} className="space-y-4">
-            <div className="sticky top-0 z-10 flex items-center justify-center py-2">
-              <div className="bg-primary-950/5 backdrop-blur-sm px-4 py-1.5 rounded-full border border-primary-950/10">
-                <span className="text-sm font-medium text-primary-950">
-                  {formatDate(date)}
-                </span>
-              </div>
-            </div>
-            
-            {dateMessages.map((message) => (
-              <div
-                key={message.id}
-                className={`chat ${
-                  message.sender === "user" ? "chat-end" : "chat-start"
-                }`}
-              >
-                <div className="chat-image avatar placeholder">
-                  <div
-                    className={`w-10 rounded-full ${
-                      message.sender === "user"
-                        ? "bg-blue-500 text-white"
-                        : "bg-primary-950 text-white"
-                    }`}
-                  >
-                    <span>
-                      {message.sender === "user" ? userName[0] : aiName[0]}
-                    </span>
-                  </div>
-                </div>
-                <div className="chat-header mb-1 text-gray-600">
-                  {message.sender === "user" ? userName : aiName}
-                  {message.displayTime && (
-                    <time className="text-xs opacity-50 ml-2">
-                      {message.displayTime}
-                    </time>
-                  )}
-                </div>
+      <div
+        className={`flex-1 overflow-y-auto p-4 space-y-6 ${
+          theme === "light" ? "bg-gray-50" : "bg-gray-900"
+        }`}
+      >
+        {groupMessagesByDate(messages).map(
+          ({ date, messages: dateMessages }, groupIndex) => (
+            <div key={date} className="space-y-4">
+              <div className="sticky top-0 z-10 flex items-center justify-center py-2">
                 <div
-                  className={`chat-bubble ${
-                    message.sender === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-white text-gray-800 border border-gray-200"
+                  className={`backdrop-blur-sm px-4 py-1.5 rounded-full ${
+                    theme === "light"
+                      ? "bg-primary-50 border border-primary-100"
+                      : "bg-gray-800 border border-gray-700"
                   }`}
                 >
-                  {message.content}
+                  <span
+                    className={`text-sm font-medium ${
+                      theme === "light" ? "text-primary-800" : "text-gray-200"
+                    }`}
+                  >
+                    {formatDate(date)}
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-        ))}
+
+              {dateMessages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={`chat ${
+                    message.sender === "user" ? "chat-end" : "chat-start"
+                  }`}
+                >
+                  <div className="chat-image avatar placeholder">
+                    <div
+                      className={`w-10 rounded-full ${
+                        message.sender === "user"
+                          ? "bg-blue-500 text-white"
+                          : theme === "light"
+                          ? "bg-primary-600 text-white"
+                          : "bg-primary-800 text-white"
+                      }`}
+                    >
+                      <span>
+                        {message.sender === "user" ? userName[0] : aiName[0]}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    className={`chat-header mb-1 ${
+                      theme === "light" ? "text-gray-600" : "text-gray-300"
+                    }`}
+                  >
+                    {message.sender === "user" ? userName : aiName}
+                    {message.displayTime && (
+                      <time
+                        className={`text-xs opacity-50 ml-2 flex items-center gap-1 ${
+                          theme === "light" ? "text-gray-600" : "text-gray-300"
+                        }`}
+                      >
+                        <Clock size={10} />
+                        {message.displayTime}
+                      </time>
+                    )}
+                  </div>
+                  <div
+                    className={`chat-bubble ${
+                      message.sender === "user"
+                        ? "bg-blue-500 text-white"
+                        : theme === "light"
+                        ? "bg-white text-gray-800 border border-gray-200"
+                        : "bg-gray-800 text-gray-200 border border-gray-700"
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )
+        )}
 
         {isTyping && (
           <div className="chat chat-start">
             <div className="chat-image avatar placeholder">
-              <div className="bg-primary-950 text-white w-8 sm:w-10 rounded-full">
-                <span className="text-sm sm:text-base">{aiName[0]}</span>
+              <div
+                className={`w-10 rounded-full ${
+                  theme === "light"
+                    ? "bg-primary-600 text-white"
+                    : "bg-primary-800 text-white"
+                }`}
+              >
+                <span>{aiName[0]}</span>
               </div>
             </div>
-            <div className="chat-bubble bg-white text-gray-800 border border-gray-200">
-              <div className="flex gap-1">
-                <span className="loading loading-ball loading-sm"></span>
-                <span className="loading loading-ball loading-sm"></span>
-                <span className="loading loading-ball loading-sm"></span>
+            <div
+              className={`chat-bubble ${
+                theme === "light"
+                  ? "bg-white text-gray-800 border border-gray-200"
+                  : "bg-gray-800 text-gray-200 border border-gray-700"
+              }`}
+            >
+              <div className="flex gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-150"></span>
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-300"></span>
               </div>
             </div>
           </div>
@@ -382,32 +405,43 @@ Feel free to ask me anything! I'm here to assist you.`,
       </div>
 
       {/* Input Form */}
-      <div className="p-2 sm:p-4 bg-white border-t">
+      <div
+        className={`p-4 border-t ${
+          theme === "light"
+            ? "bg-white border-gray-200"
+            : "bg-gray-800 border-gray-700"
+        }`}
+      >
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Ask me anything..."
-            className="input input-bordered flex-1 bg-white focus:bg-white text-black min-w-0"
+            className={`flex-1 px-4 py-3 rounded-xl border ${
+              theme === "light"
+                ? "bg-white border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 text-gray-800 placeholder-gray-400"
+                : "bg-gray-700 border-gray-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-700 text-gray-100 placeholder-gray-500"
+            } focus:outline-none transition-all`}
           />
 
           <button
             type="submit"
-            className="btn btn-primary"
+            className={`px-4 py-2 rounded-xl transition-colors ${
+              !inputMessage.trim() || isTyping
+                ? theme === "light"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-700 text-gray-500 cursor-not-allowed"
+                : theme === "light"
+                ? "bg-primary-600 hover:bg-primary-700 text-white"
+                : "bg-primary-700 hover:bg-primary-600 text-white"
+            }`}
             disabled={!inputMessage.trim() || isTyping}
           >
             {isTyping ? (
-              <span className="loading loading-ball loading-sm"></span>
+              <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin"></div>
             ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-6 h-6"
-              >
-                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-              </svg>
+              <Send size={20} />
             )}
           </button>
         </form>

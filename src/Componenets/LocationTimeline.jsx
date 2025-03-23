@@ -9,6 +9,7 @@ const LocationTimeline = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [timeline, setTimeline] = useState(null);
+  const [theme, setTheme] = useState("light");
 
   // Function to format time to 12-hour format
   const formatTime = (time24) => {
@@ -20,6 +21,11 @@ const LocationTimeline = () => {
   };
 
   useEffect(() => {
+    const currentTheme = localStorage.getItem("theme") || "light";
+    setTheme(currentTheme);
+  }, []);
+
+  useEffect(() => {
     let timelineInstance = null;
 
     const fetchLocations = async () => {
@@ -27,19 +33,19 @@ const LocationTimeline = () => {
         const response = await customFetch.get("/feedback/locations");
         const locations = response.data;
 
-        // Create timeline items from locations
+        // Create timeline items from locations with conditional text colors based on theme
         const items = locations.map((loc) => ({
           id: loc._id || Math.random().toString(),
           content: `
             <div class="p-2 sm:p-3">
               <div class="flex flex-col gap-1 sm:gap-2">
-                <div class="font-medium text-xs sm:text-base text-gray-900">
+                <div class="font-medium text-xs sm:text-base ${theme === "light" ? "text-gray-900" : "text-gray-100"}">
                   ${loc.location?.area || "Unknown Area"}
                 </div>
-                <div class="text-[10px] sm:text-xs text-gray-500 leading-tight sm:leading-relaxed">
+                <div class="text-[10px] sm:text-xs ${theme === "light" ? "text-gray-500" : "text-gray-400"} leading-tight sm:leading-relaxed">
                   ${loc.location?.formatted_address || "No address available"}
                 </div>
-                <div class="text-[10px] sm:text-xs text-gray-600">
+                <div class="text-[10px] sm:text-xs ${theme === "light" ? "text-gray-600" : "text-gray-500"}">
                   ${loc.id_date} at ${formatTime(loc.id_time)}
                 </div>
               </div>
@@ -51,20 +57,20 @@ const LocationTimeline = () => {
           group: loc.location?.area || "Unknown",
         }));
 
-        // Create groups based on unique areas
+        // Create groups based on unique areas with conditional text colors
         const uniqueAreas = [
           ...new Set(locations.map((loc) => loc.location?.area || "Unknown")),
         ];
         const groups = uniqueAreas.map((area) => ({
           id: area,
           content: `
-            <div class="font-medium text-[10px] sm:text-sm text-gray-900 px-2 py-1">
+            <div class="font-medium text-[10px] sm:text-sm ${theme === "light" ? "text-gray-900" : "text-gray-100"} px-2 py-1">
               ${area}
             </div>
           `,
         }));
 
-        // Configure timeline options
+        // Timeline options
         const options = {
           width: "100%",
           height: "400px",
@@ -78,7 +84,7 @@ const LocationTimeline = () => {
             item: {
               horizontal: 8,
               vertical: 8,
-            }
+            },
           },
           format: {
             minorLabels: {
@@ -99,7 +105,6 @@ const LocationTimeline = () => {
           },
         };
 
-        // Initialize timeline
         if (timelineRef.current) {
           timelineInstance = new Timeline(
             timelineRef.current,
@@ -121,8 +126,8 @@ const LocationTimeline = () => {
         }
 
         setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching locations:", error);
+      } catch (err) {
+        console.error("Error fetching locations:", err);
         setError("Failed to load timeline data");
         setIsLoading(false);
       }
@@ -135,11 +140,11 @@ const LocationTimeline = () => {
         timelineInstance.destroy();
       }
     };
-  }, []);
+  }, [theme]);
 
   if (isLoading) {
     return (
-      <div className="h-[400px] flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className={`h-[400px] flex items-center justify-center ${theme === "light" ? "bg-gray-100" : "bg-slate-800"} rounded-lg`}>
         <div className="flex gap-2">
           <span className="loading loading-ball loading-sm"></span>
           <span className="loading loading-ball loading-sm"></span>
@@ -151,14 +156,14 @@ const LocationTimeline = () => {
 
   if (error) {
     return (
-      <div className="h-[400px] flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className={`h-[400px] flex items-center justify-center ${theme === "light" ? "bg-gray-100" : "bg-slate-800"} rounded-lg`}>
         <p className="text-red-500 text-sm sm:text-base">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg">
+    <div className={`rounded-lg shadow-lg ${theme === "light" ? "bg-white text-gray-900" : "bg-slate-900 text-gray-100"}`}>
       <div
         ref={timelineRef}
         className="timeline-container"

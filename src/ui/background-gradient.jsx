@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils";
 
 // Utility function for conditional className merging
-
 
 export const BackgroundGradient = ({
   children,
@@ -11,6 +10,23 @@ export const BackgroundGradient = ({
   animate = true,
 }) => {
   const containerRef = useRef(null);
+  const [theme, setTheme] = useState("light");
+
+  useEffect(() => {
+    const currentTheme = localStorage.getItem("theme") || "light";
+    setTheme(currentTheme);
+    document.documentElement.setAttribute("data-theme", currentTheme);
+
+    const handleStorageChange = () => {
+      const updatedTheme = localStorage.getItem("theme") || "light";
+      setTheme(updatedTheme);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!animate) return;
@@ -34,13 +50,19 @@ export const BackgroundGradient = ({
     <div
       ref={containerRef}
       className={cn(
-        "relative w-full bg-white rounded-lg overflow-hidden",
+        // Apply different background classes based on the theme
+        theme === "light"
+          ? "relative w-full bg-white rounded-2xl overflow-hidden"
+          : "relative w-full bg-slate-800 rounded-2xl overflow-hidden",
         containerClassName
       )}
     >
       <div
         className={cn(
-          "relative z-10 w-full h-full bg-white flex items-center justify-center",
+          // Apply different background colors in the inner container
+          theme === "light"
+            ? "relative z-10 w-full h-full bg-white flex items-center justify-center"
+            : "relative z-10 w-full h-full bg-slate-900 flex items-center justify-center",
           className
         )}
       >

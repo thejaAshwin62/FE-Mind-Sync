@@ -11,6 +11,7 @@ import {
   HoverCardContent,
 } from "../ui/hover-card";
 import { TypewriterEffect } from "../ui/typewriter-effect";
+import customFetch from "../utils/customFetch";
 
 const SetupCamera = () => {
   const [ssid, setSsid] = useState("");
@@ -81,6 +82,19 @@ const SetupCamera = () => {
     }, 100);
   };
 
+  const handleWifiCredentialsCheck = async () => {
+    try {
+      const response = await customFetch.post("/stats/update-wifi", {
+        ssid: ssid,
+        password: password,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error updating wifi credentials:", error);
+      throw error;
+    }
+  };
+
   const handleConnect = async (e) => {
     e.preventDefault();
 
@@ -92,22 +106,28 @@ const SetupCamera = () => {
     setIsConnecting(true);
     setConnectionStatus(null);
 
-    // Simulate connection process
     try {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // Post WiFi credentials to backend
+      const result = await handleWifiCredentialsCheck();
+      console.log("Wifi credentials update response:", result);
 
-      // Simulate successful connection (in a real app, this would be an API call)
-      setConnectionStatus("success");
-      setCurrentStep(2);
+      if (result.success) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setConnectionStatus("success");
+        setCurrentStep(2);
 
-      // Scroll to the next step
-      setTimeout(() => {
-        const nextStepElement = document.getElementById("step2");
-        if (nextStepElement) {
-          nextStepElement.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 1000);
+        // Scroll to the next step
+        setTimeout(() => {
+          const nextStepElement = document.getElementById("step2");
+          if (nextStepElement) {
+            nextStepElement.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 1000);
+      } else {
+        setConnectionStatus("error");
+      }
     } catch (error) {
+      console.error("Failed to update WiFi credentials:", error);
       setConnectionStatus("error");
     } finally {
       setIsConnecting(false);
@@ -326,103 +346,101 @@ const SetupCamera = () => {
         </motion.div>
 
         {/* Progress Steps */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate={"visible"}
-            className="mb-12 w-full overflow-x-hidden"
-          >
-            <div className="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-4 px-4">
-              {setupSteps.map((step, index) => (
-                <motion.div
-            key={step.id}
-            variants={itemVariants}
-            className="w-full md:flex-1 flex flex-col items-center text-center max-w-xs mx-auto"
-            id={`step${step.id}`}
-                >
-            <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-all duration-300 ${
-                step.completed
-                  ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-                  : step.active
-                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
-              }`}
-            >
-              {step.completed ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              ) : (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate={"visible"}
+          className="mb-12 w-full overflow-x-hidden"
+        >
+          <div className="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-4 px-4">
+            {setupSteps.map((step, index) => (
+              <motion.div
+                key={step.id}
+                variants={itemVariants}
+                className="w-full md:flex-1 flex flex-col items-center text-center max-w-xs mx-auto"
+                id={`step${step.id}`}
+              >
                 <div
-                  className={`${
-              step.active
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-gray-400 dark:text-gray-500"
+                  className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-all duration-300 ${
+                    step.completed
+                      ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                      : step.active
+                      ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
                   }`}
                 >
-                  {step.icon}
+                  {step.completed ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  ) : (
+                    <div
+                      className={`${
+                        step.active
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-gray-400 dark:text-gray-500"
+                      }`}
+                    >
+                      {step.icon}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <h3
-              className={`text-lg font-semibold mb-1 ${
-                step.active
-                  ? "text-gray-900 dark:text-white"
-                  : "text-gray-500 dark:text-gray-400"
-              }`}
-            >
-              {step.title}
-            </h3>
+                <h3
+                  className={`text-lg font-semibold mb-1 ${
+                    step.active
+                      ? "text-gray-900 dark:text-white"
+                      : "text-gray-500 dark:text-gray-400"
+                  }`}
+                >
+                  {step.title}
+                </h3>
 
-            <p
-              className={`text-sm ${
-                step.active
-                  ? "text-gray-600 dark:text-gray-300"
-                  : "text-gray-400 dark:text-gray-500"
-              }`}
-            >
-              {step.description}
-            </p>
+                <p
+                  className={`text-sm ${
+                    step.active
+                      ? "text-gray-600 dark:text-gray-300"
+                      : "text-gray-400 dark:text-gray-500"
+                  }`}
+                >
+                  {step.description}
+                </p>
 
-            {/* Connector line between steps - Only visible on md screens and above */}
-            {index < setupSteps.length - 1 && (
-              <div className="hidden md:block absolute h-1 bg-gray-200 dark:bg-gray-700 w-1/3 left-[calc(50%+2rem)] top-8 z-0"></div>
-            )}
-                </motion.div>
+                {/* Connector line between steps - Only visible on md screens and above */}
+                {index < setupSteps.length - 1 && (
+                  <div className="hidden md:block absolute h-1 bg-gray-200 dark:bg-gray-700 w-1/3 left-[calc(50%+2rem)] top-8 z-0"></div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Mobile step indicator */}
+          <div className="flex justify-center mt-4 md:hidden">
+            <div className="flex space-x-2">
+              {setupSteps.map((step) => (
+                <div
+                  key={`indicator-${step.id}`}
+                  className={`w-2 h-2 rounded-full ${
+                    step.active ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"
+                  }`}
+                />
               ))}
             </div>
-            
-            {/* Mobile step indicator */}
-            <div className="flex justify-center mt-4 md:hidden">
-              <div className="flex space-x-2">
-                {setupSteps.map((step) => (
-            <div 
-              key={`indicator-${step.id}`}
-              className={`w-2 h-2 rounded-full ${
-                step.active 
-                  ? "bg-blue-500" 
-                  : "bg-gray-300 dark:bg-gray-600"
-              }`}
-            />
-                ))}
-              </div>
-            </div>
-          </motion.div>
+          </div>
+        </motion.div>
 
-          {/* Main Content Area */}
+        {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Left Column - Instructions */}
           <motion.div
@@ -452,7 +470,7 @@ const SetupCamera = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
                     />
                   </svg>
                   Setup Instructions
@@ -1797,11 +1815,11 @@ const SetupCamera = () => {
                             } focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all`}
                           >
                             <option value="15">
-                              Every 15 seconds (Default)
+                              Every 15 minutes (Default)
                             </option>
-                            <option value="30">Every 30 seconds</option>
-                            <option value="60">Every 1 minute</option>
-                            <option value="300">Every 5 minutes</option>
+                            <option value="30">Every 2 minutes</option>
+                            <option value="60">Every 5 minute</option>
+                            <option value="300">Every 10 minutes</option>
                             <option value="custom">Custom interval</option>
                           </select>
                         </div>

@@ -123,38 +123,38 @@ const Footer = () => {
   return (
     <footer className="mt-32 border-t border-slate-200 dark:border-slate-700 pt-10 pb-8 bg-white dark:bg-slate-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
-          {/* Brand Column */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">M</span>
-              </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white">
-                MindSync
-              </span>
+        {/* Brand Column */}
+        <div className="flex flex-col items-center mb-10">
+          <div className="flex items-center space-x-2 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">M</span>
             </div>
-            <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-xs">
-              Transforming visual data into actionable insights with our
-              revolutionary camera technology.
-            </p>
-            <div className="flex space-x-5">
-              {socialLinks.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="text-slate-400 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors duration-200"
-                  aria-label={item.name}
-                >
-                  {item.icon}
-                </a>
-              ))}
-            </div>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">
+              MindSync
+            </span>
           </div>
+          <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-xs">
+            Transforming visual data into actionable insights with our
+            revolutionary camera technology.
+          </p>
+          <div className="flex space-x-5">
+            {socialLinks.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="text-slate-400 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors duration-200"
+                aria-label={item.name}
+              >
+                {item.icon}
+              </a>
+            ))}
+          </div>
+        </div>
 
-          {/* Link Columns */}
+        {/* Link Columns - Single Row */}
+        <div className="flex flex-row justify-around flex-wrap gap-8 py-8 border-t border-slate-200 dark:border-slate-700">
           {footerLinks.map((column) => (
-            <div key={column.title}>
+            <div key={column.title} className="flex-1 min-w-[150px] text-center">
               <h4 className="font-semibold text-slate-900 dark:text-white mb-4 text-sm uppercase tracking-wider">
                 {column.title}
               </h4>

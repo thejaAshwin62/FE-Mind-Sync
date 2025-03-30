@@ -113,9 +113,9 @@ const GetStarted = () => {
     },
     {
       id: 3,
-      title: "Explore Your Data",
+      title: "Face Recognition Lab ",
       description:
-        "Dive into the rich visual data captured by your camera. Browse through your timeline, discover patterns, and gain insights from your daily experiences.",
+        "Capture and store faces to enhance your memory experience. Your personal face database helps MindSync recognize people in your daily life.",
       image:
         "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
       path: "/get-started/face-register",

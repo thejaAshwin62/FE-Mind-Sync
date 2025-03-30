@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useChat } from "../Context/ChatContext";

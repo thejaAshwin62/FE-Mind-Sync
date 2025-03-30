@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -15,9 +13,10 @@ import {
 
 const GetStarted = () => {
   const containerRef = useRef(null);
-  const [theme, setTheme] = useState("light");
+ 
   const [activeStep, setActiveStep] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
     const currentTheme = localStorage.getItem("theme") || "light";
@@ -119,7 +118,7 @@ const GetStarted = () => {
         "Dive into the rich visual data captured by your camera. Browse through your timeline, discover patterns, and gain insights from your daily experiences.",
       image:
         "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-      path: "/dashboard",
+      path: "/get-started/face-register",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -144,8 +143,6 @@ const GetStarted = () => {
       ],
     },
   ];
-
-
 
   // Animation variants
   const containerVariants = {
@@ -443,8 +440,6 @@ const GetStarted = () => {
             ))}
           </div>
         </motion.div>
-
-        
 
         {/* Interactive Demo Section */}
         <motion.div

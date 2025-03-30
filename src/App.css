@@ -72,9 +72,6 @@ body {
   padding-top: 64px; /* Height of the navbar */
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 @layer base {
   :root {

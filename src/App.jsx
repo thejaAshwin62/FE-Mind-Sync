@@ -19,6 +19,7 @@ import { ChatProvider } from "./Context/ChatContext";
 import About from "./Pages/About";
 import Contact from "./Pages/Contact";
 import SignUp from "./Pages/SignUp";
+import FaceRegister from "./Pages/FaceRegister";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -68,6 +69,7 @@ const App = () => {
                     <Routes>
                       <Route path="chatbot" element={<ChatBot />} />
                       <Route path="setup-camera" element={<SetupCamera />} />
+                      <Route path="face-register" element={<FaceRegister />} />
                       <Route
                         path="start-recording"
                         element={<StartRecording />}
@@ -85,7 +87,7 @@ const App = () => {
                 }
               />
               <Route path="/about" element={<About />} />
-              
+
               <Route path="/contact" element={<Contact />} />
             </Routes>
           </div>

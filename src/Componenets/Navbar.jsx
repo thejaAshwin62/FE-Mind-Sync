@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Logo from "../assets/Logo.svg";
 import { useAuth, useClerk } from "@clerk/clerk-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import ToggleButton from "./ToggleButton";
 
 const Navbar = () => {
@@ -10,6 +10,7 @@ const Navbar = () => {
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState("light");
 
@@ -162,6 +163,10 @@ const Navbar = () => {
                       theme === "light"
                         ? "text-secondary-950"
                         : "text-[#D6CDF9]"
+                    } ${
+                      location.pathname === "/"
+                        ? "bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent font-semibold"
+                        : ""
                     }`}
                   >
                     Home
@@ -173,6 +178,10 @@ const Navbar = () => {
                       theme === "light"
                         ? "text-secondary-950"
                         : "text-[#D6CDF9]"
+                    } ${
+                      location.pathname === "/about"
+                        ? "bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent font-semibold"
+                        : ""
                     }`}
                   >
                     About
@@ -184,6 +193,10 @@ const Navbar = () => {
                       theme === "light"
                         ? "text-secondary-950"
                         : "text-[#D6CDF9]"
+                    } ${
+                      location.pathname === "/contact"
+                        ? "bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent font-semibold"
+                        : ""
                     }`}
                   >
                     Contact
@@ -195,6 +208,10 @@ const Navbar = () => {
                       theme === "light"
                         ? "text-secondary-950"
                         : "text-[#D6CDF9]"
+                    } ${
+                      location.pathname === "/dashboard"
+                        ? "bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent font-semibold"
+                        : ""
                     }`}
                   >
                     Dashboard
@@ -270,6 +287,10 @@ const Navbar = () => {
                         theme === "light"
                           ? "text-secondary-950"
                           : "text-[#D6CDF9]"
+                      } ${
+                        location.pathname === "/"
+                          ? "bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent font-semibold"
+                          : ""
                       }`}
                     >
                       Home
@@ -281,6 +302,10 @@ const Navbar = () => {
                         theme === "light"
                           ? "text-secondary-950"
                           : "text-[#D6CDF9]"
+                      } ${
+                        location.pathname === "/about"
+                          ? "bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent font-semibold"
+                          : ""
                       }`}
                     >
                       About
@@ -292,6 +317,10 @@ const Navbar = () => {
                         theme === "light"
                           ? "text-secondary-950"
                           : "text-[#D6CDF9]"
+                      } ${
+                        location.pathname === "/contact"
+                          ? "bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent font-semibold"
+                          : ""
                       }`}
                     >
                       Contact
@@ -303,6 +332,10 @@ const Navbar = () => {
                         theme === "light"
                           ? "text-secondary-950"
                           : "text-[#D6CDF9]"
+                      } ${
+                        location.pathname === "/dashboard"
+                          ? "bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent font-semibold"
+                          : ""
                       }`}
                     >
                       Dashboard

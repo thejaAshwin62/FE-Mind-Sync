@@ -3,8 +3,6 @@ import { useUser } from "@clerk/clerk-react";
 import { useChat } from "../Context/ChatContext";
 import LoadingScreen from "../Componenets/LoadingScreen";
 import useLoadingDelay from "../hooks/useLoadingDelay";
-import LocationMap from "../Componenets/LocationMap";
-import LocationTimeline from "../Componenets/LocationTimeline";
 import { motion, AnimatePresence } from "framer-motion";
 import { BackgroundGradient } from "../ui/background-gradient";
 import {
@@ -13,9 +11,7 @@ import {
   HoverCardContent,
 } from "../ui/hover-card";
 import { SparklesCore } from "../ui/sparkles";
-import { InfiniteMovingCards } from "../ui/infinite-moving-cards";
 import { CardContainer, CardBody, CardItem } from "../ui/3d-card";
-import "leaflet/dist/leaflet.css";
 import customFetch from "../utils/customFetch";
 
 const Dashboard = () => {
@@ -28,7 +24,6 @@ const Dashboard = () => {
   const isLoading = useLoadingDelay();
   const [isSavingAI, setIsSavingAI] = useState(false);
   const [isSavingUser, setIsSavingUser] = useState(false);
-  const [activeTab, setActiveTab] = useState("locations");
   const [captures, setCaptures] = useState([]);
   const [objects, setObjects] = useState([]);
   const [faceRecords, setFaceRecords] = useState([]);
@@ -599,13 +594,13 @@ const Dashboard = () => {
                           <div className="flex justify-between text-gray-700 dark:text-gray-300">
                             <span>Average Per Image</span>
                             <span className="font-medium">
-                              {objects.averagePerImage || 0}
+                              {objects?.averagePerImage?.toFixed(2) || 0}
                             </span>
                           </div>
                           <div className="flex justify-between text-gray-700 dark:text-gray-300">
                             <span>Unique Objects</span>
                             <span className="font-medium">
-                              {objects.totalUniqueObjects || 0}
+                              {objects?.totalUniqueObjects || 0}
                             </span>
                           </div>
                         </div>
@@ -614,100 +609,6 @@ const Dashboard = () => {
                   </HoverCard>
                 </div>
               </motion.div>
-            </div>
-
-            {/* Tabs for Map and Timeline */}
-            <div className="mt-8">
-              <div className="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-300">
-                <nav className="flex space-x-8">
-                  <button
-                    onClick={() => setActiveTab("locations")}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === "locations"
-                        ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
-                    } transition-colors duration-300`}
-                  >
-                    Memory Locations
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("timeline")}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === "timeline"
-                        ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
-                    } transition-colors duration-300`}
-                  >
-                    Memory Timeline
-                  </button>
-                </nav>
-              </div>
-
-              {/* Map Section */}
-              <AnimatePresence mode="wait">
-                {activeTab === "locations" && (
-                  <motion.div
-                    key="map"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300"
-                  >
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-gray-100 dark:border-gray-700 transition-colors duration-300">
-                      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Memory Locations
-                      </h3>
-                    </div>
-                    <div className="h-[400px] relative">
-                      <LocationMap />
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Timeline Section */}
-                {activeTab === "timeline" && (
-                  <motion.div
-                    key="timeline"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300"
-                  >
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-gray-100 dark:border-gray-700 transition-colors duration-300">
-                      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Memory Timeline
-                      </h3>
-                    </div>
-                    <LocationTimeline />
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
             {/* Recognized Faces Section */}

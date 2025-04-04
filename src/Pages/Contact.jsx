@@ -638,18 +638,18 @@ const Contact = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="mt-16"
+          className="mt-16 px-4 sm:px-6 lg:px-8"
         >
           <div className="text-center mb-8">
             <h2
-              className={`text-2xl font-bold ${
+              className={`text-2xl sm:text-3xl font-bold ${
                 theme === "light" ? "text-slate-900" : "text-white"
               } mb-3`}
             >
               Frequently Asked Questions
             </h2>
             <p
-              className={`text-base max-w-2xl mx-auto ${
+              className={`text-base sm:text-lg max-w-2xl mx-auto ${
                 theme === "light" ? "text-slate-700" : "text-slate-400"
               }`}
             >
@@ -661,25 +661,25 @@ const Contact = () => {
             <div
               className={`${
                 theme === "light" ? "bg-white/90" : "bg-slate-800/90"
-              } backdrop-blur-sm p-6 rounded-xl`}
+              } backdrop-blur-sm p-4 sm:p-6 rounded-xl`}
             >
-              <div className="grid grid-cols-4 md:grid-cols-2 gap-6 items-center ">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* FAQ items */}
                 <div className="space-y-4">
                   <div
                     className={`p-4 rounded-lg ${
                       theme === "light" ? "bg-slate-50" : "bg-slate-700"
-                    }`}
+                    } transition-colors duration-200 hover:shadow-md`}
                   >
                     <h3
-                      className={`text-lg font-bold ${
+                      className={`text-base sm:text-lg font-bold ${
                         theme === "light" ? "text-slate-900" : "text-white"
                       } mb-2`}
                     >
                       How does the camera capture data?
                     </h3>
                     <p
-                      className={`text-sm leading-relaxed ${
+                      className={`text-sm sm:text-base leading-relaxed ${
                         theme === "light" ? "text-slate-600" : "text-slate-400"
                       }`}
                     >
@@ -691,17 +691,17 @@ const Contact = () => {
                   <div
                     className={`p-4 rounded-lg ${
                       theme === "light" ? "bg-slate-50" : "bg-slate-700"
-                    }`}
+                    } transition-colors duration-200 hover:shadow-md`}
                   >
                     <h3
-                      className={`text-lg font-bold ${
+                      className={`text-base sm:text-lg font-bold ${
                         theme === "light" ? "text-slate-900" : "text-white"
                       } mb-2`}
                     >
                       Is my data secure and private?
                     </h3>
                     <p
-                      className={`text-sm leading-relaxed ${
+                      className={`text-sm sm:text-base leading-relaxed ${
                         theme === "light" ? "text-slate-600" : "text-slate-400"
                       }`}
                     >
@@ -716,17 +716,17 @@ const Contact = () => {
                   <div
                     className={`p-4 rounded-lg ${
                       theme === "light" ? "bg-slate-50" : "bg-slate-700"
-                    }`}
+                    } transition-colors duration-200 hover:shadow-md`}
                   >
                     <h3
-                      className={`text-lg font-bold ${
+                      className={`text-base sm:text-lg font-bold ${
                         theme === "light" ? "text-slate-900" : "text-white"
                       } mb-2`}
                     >
                       How long does the battery last?
                     </h3>
                     <p
-                      className={`text-sm leading-relaxed ${
+                      className={`text-sm sm:text-base leading-relaxed ${
                         theme === "light" ? "text-slate-600" : "text-slate-400"
                       }`}
                     >
@@ -739,17 +739,17 @@ const Contact = () => {
                   <div
                     className={`p-4 rounded-lg ${
                       theme === "light" ? "bg-slate-50" : "bg-slate-700"
-                    }`}
+                    } transition-colors duration-200 hover:shadow-md`}
                   >
                     <h3
-                      className={`text-lg font-bold ${
+                      className={`text-base sm:text-lg font-bold ${
                         theme === "light" ? "text-slate-900" : "text-white"
                       } mb-2`}
                     >
                       Can I integrate with other apps?
                     </h3>
                     <p
-                      className={`text-sm leading-relaxed ${
+                      className={`text-sm sm:text-base leading-relaxed ${
                         theme === "light" ? "text-slate-600" : "text-slate-400"
                       }`}
                     >

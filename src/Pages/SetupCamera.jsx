@@ -10,6 +10,8 @@ import {
 } from "../ui/hover-card";
 import { TypewriterEffect } from "../ui/typewriter-effect";
 import customFetch from "../utils/customFetch";
+import axios from "axios";
+import { LockIcon, SignalIcon } from "lucide-react";
 
 const SetupCamera = () => {
   const [ssid, setSsid] = useState("");
@@ -21,6 +23,8 @@ const SetupCamera = () => {
   const [theme, setTheme] = useState("light");
   const [scanningNetworks, setScanningNetworks] = useState(false);
   const [availableNetworks, setAvailableNetworks] = useState([]);
+  const [wifiDetails, setWifiDetails] = useState("");
+  const [captureInterval, setCaptureInterval] = useState("15");
   const formRef = useRef(null);
 
   // Mock available networks
@@ -58,6 +62,41 @@ const SetupCamera = () => {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  useEffect(() => {
+    const fetchWifiDetails = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/v1/stats/scan-wifi"
+        );
+        if (
+          response.data?.data?.networks &&
+          response.data.data.networks.length > 0
+        ) {
+          const formatted = response.data.data.networks.map((net) => ({
+            ssid: net.ssid,
+            strength: Math.min(100, Math.max(0, net.quality)), // cap between 0 and 100
+            secured: net.security !== "none",
+          }));
+          setWifiDetails(formatted);
+        } else {
+          setWifiDetails([]); // No data
+        }
+      } catch (error) {
+        console.log("Error fetching WiFi details:", error.message);
+        setWifiDetails([]); // error fallback
+      } finally {
+        setScanningNetworks(false);
+      }
+    };
+
+    fetchWifiDetails();
+  }, []);
+
+  console.log("Available Networks:", wifiDetails);
+
+  const availableNetworksWifi =
+    wifiDetails.length > 0 ? wifiDetails : mockNetworks;
 
   const handleScanNetworks = () => {
     setScanningNetworks(true);
@@ -129,6 +168,19 @@ const SetupCamera = () => {
       setConnectionStatus("error");
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleIntervalChange = (e) => {
+    const value = e.target.value;
+    setCaptureInterval(value);
+    try {
+      const response = customFetch.post("/stats/update-capture-interval", {
+        interval: value,
+      });
+      console.log("Capture interval update response:", response);
+    } catch (error) {
+      console.error("Error updating capture interval:", error);
     }
   };
 
@@ -1025,9 +1077,9 @@ const SetupCamera = () => {
                               : "border-gray-700"
                           } overflow-hidden`}
                         >
-                          {availableNetworks.length > 0 ? (
+                          {availableNetworksWifi.length > 0 ? (
                             <div className="max-h-48 overflow-y-auto">
-                              {availableNetworks.map((network, index) => (
+                              {availableNetworksWifi.map((network, index) => (
                                 <div
                                   key={index}
                                   onClick={() => handleSelectNetwork(network)}
@@ -1050,56 +1102,17 @@ const SetupCamera = () => {
                                   <div className="flex items-center">
                                     <div className="mr-3">
                                       {network.strength > 70 ? (
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          className={`h-5 w-5 ${
-                                            theme === "light"
-                                              ? "text-green-600"
-                                              : "text-green-400"
-                                          }`}
-                                          viewBox="0 0 20 20"
-                                          fill="currentColor"
-                                        >
-                                          <path
-                                            fillRule="evenodd"
-                                            d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
-                                            clipRule="evenodd"
-                                          />
-                                        </svg>
+                                        <SignalIcon
+                                          color="green"
+                                          theme={theme}
+                                        />
                                       ) : network.strength > 40 ? (
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          className={`h-5 w-5 ${
-                                            theme === "light"
-                                              ? "text-yellow-600"
-                                              : "text-yellow-400"
-                                          }`}
-                                          viewBox="0 0 20 20"
-                                          fill="currentColor"
-                                        >
-                                          <path
-                                            fillRule="evenodd"
-                                            d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
-                                            clipRule="evenodd"
-                                          />
-                                        </svg>
+                                        <SignalIcon
+                                          color="yellow"
+                                          theme={theme}
+                                        />
                                       ) : (
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          className={`h-5 w-5 ${
-                                            theme === "light"
-                                              ? "text-red-600"
-                                              : "text-red-400"
-                                          }`}
-                                          viewBox="0 0 20 20"
-                                          fill="currentColor"
-                                        >
-                                          <path
-                                            fillRule="evenodd"
-                                            d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414z"
-                                            clipRule="evenodd"
-                                          />
-                                        </svg>
+                                        <SignalIcon color="red" theme={theme} />
                                       )}
                                     </div>
                                     <div>
@@ -1125,22 +1138,7 @@ const SetupCamera = () => {
                                     </div>
                                   </div>
                                   {network.secured && (
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      className={`h-4 w-4 ${
-                                        theme === "light"
-                                          ? "text-gray-400"
-                                          : "text-gray-500"
-                                      }`}
-                                      viewBox="0 0 20 20"
-                                      fill="currentColor"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
+                                    <LockIcon theme={theme} />
                                   )}
                                 </div>
                               ))}
@@ -1153,26 +1151,7 @@ const SetupCamera = () => {
                                   : "text-gray-400"
                               }`}
                             >
-                              <svg
-                                className="animate-spin h-8 w-8 mx-auto mb-2 text-blue-500"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                ></circle>
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                              </svg>
+                              <Loader />
                               <p>Scanning for available networks...</p>
                             </div>
                           ) : (
@@ -1183,24 +1162,8 @@ const SetupCamera = () => {
                                   : "text-gray-400"
                               }`}
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-8 w-8 mx-auto mb-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
-                                />
-                              </svg>
-                              <p>
-                                Click "Scan Networks" to find available WiFi
-                                networks
-                              </p>
+                              <NoWifiIcon />
+                              <p>No networks found. Showing mock networks.</p>
                             </div>
                           )}
                         </div>
@@ -1396,308 +1359,9 @@ const SetupCamera = () => {
         </div>
 
         {/* Camera Preview Section (shown when connected) */}
-        {currentStep >= 2 && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="mb-12"
-            id="step2"
-          >
-            <BackgroundGradient className="rounded-2xl p-[1px]">
-              <div
-                className={`rounded-2xl p-6 ${
-                  theme === "light" ? "bg-white" : "bg-slate-800"
-                }`}
-              >
-                <h2
-                  className={`text-2xl font-bold mb-6 flex items-center ${
-                    theme === "light" ? "text-gray-900" : "text-white"
-                  }`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 mr-2 text-blue-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                  Camera Preview
-                </h2>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="aspect-video rounded-xl overflow-hidden bg-black relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div
-                        className={`text-center ${
-                          theme === "light" ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-12 w-12 mx-auto mb-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <p className="text-lg">Camera feed loading...</p>
-                        <p className="text-sm mt-2">
-                          This may take a few moments
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Status indicators */}
-                    <div className="absolute top-4 left-4 flex items-center space-x-2">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse mr-2"></div>
-                        <span className="text-xs text-white bg-black/50 px-2 py-1 rounded-full">
-                          Live
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-4 right-4">
-                      <div className="text-xs text-white bg-black/50 px-2 py-1 rounded-full">
-                        ESP32-CAM • 192.168.1.105
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div
-                      className={`p-4 rounded-xl ${
-                        theme === "light" ? "bg-blue-50" : "bg-blue-900/20"
-                      } border ${
-                        theme === "light"
-                          ? "border-blue-100"
-                          : "border-blue-800"
-                      }`}
-                    >
-                      <h3
-                        className={`text-lg font-semibold mb-2 ${
-                          theme === "light" ? "text-blue-800" : "text-blue-300"
-                        }`}
-                      >
-                        Camera Status
-                      </h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span
-                            className={`${
-                              theme === "light"
-                                ? "text-gray-600"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            Connection:
-                          </span>
-                          <span
-                            className={`font-medium ${
-                              theme === "light"
-                                ? "text-green-600"
-                                : "text-green-400"
-                            }`}
-                          >
-                            Online
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span
-                            className={`${
-                              theme === "light"
-                                ? "text-gray-600"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            Signal Strength:
-                          </span>
-                          <span
-                            className={`font-medium ${
-                              theme === "light" ? "text-gray-900" : "text-white"
-                            }`}
-                          >
-                            Excellent (90%)
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span
-                            className={`${
-                              theme === "light"
-                                ? "text-gray-600"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            Battery:
-                          </span>
-                          <span
-                            className={`font-medium ${
-                              theme === "light" ? "text-gray-900" : "text-white"
-                            }`}
-                          >
-                            Charging (85%)
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span
-                            className={`${
-                              theme === "light"
-                                ? "text-gray-600"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            Storage:
-                          </span>
-                          <span
-                            className={`font-medium ${
-                              theme === "light" ? "text-gray-900" : "text-white"
-                            }`}
-                          >
-                            2.4 GB Available
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3
-                        className={`text-lg font-semibold mb-3 ${
-                          theme === "light" ? "text-gray-900" : "text-white"
-                        }`}
-                      >
-                        Camera Controls
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button
-                          className={`p-3 rounded-lg ${
-                            theme === "light" ? "bg-white" : "bg-slate-700"
-                          } border ${
-                            theme === "light"
-                              ? "border-gray-200"
-                              : "border-gray-600"
-                          } hover:bg-opacity-80 transition-all flex items-center justify-center`}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 mr-2 text-blue-500"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          Take Photo
-                        </button>
-                        <button
-                          className={`p-3 rounded-lg ${
-                            theme === "light" ? "bg-white" : "bg-slate-700"
-                          } border ${
-                            theme === "light"
-                              ? "border-gray-200"
-                              : "border-gray-600"
-                          } hover:bg-opacity-80 transition-all flex items-center justify-center`}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 mr-2 text-red-500"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          Record Video
-                        </button>
-                        <button
-                          className={`p-3 rounded-lg ${
-                            theme === "light" ? "bg-white" : "bg-slate-700"
-                          } border ${
-                            theme === "light"
-                              ? "border-gray-200"
-                              : "border-gray-600"
-                          } hover:bg-opacity-80 transition-all flex items-center justify-center`}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 mr-2 text-yellow-500"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
-                          </svg>
-                          Settings
-                        </button>
-                        <button
-                          className={`p-3 rounded-lg ${
-                            theme === "light" ? "bg-white" : "bg-slate-700"
-                          } border ${
-                            theme === "light"
-                              ? "border-gray-200"
-                              : "border-gray-600"
-                          } hover:bg-opacity-80 transition-all flex items-center justify-center`}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 mr-2 text-purple-500"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" />
-                          </svg>
-                          More Options
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => setCurrentStep(3)}
-                        className={`px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center`}
-                      >
-                        Continue to Next Step
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 ml-2"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </BackgroundGradient>
-          </motion.div>
-        )}
 
         {/* Start Capturing Section */}
-        {currentStep >= 3 && (
+        {currentStep >= 2 && (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1806,18 +1470,20 @@ const SetupCamera = () => {
                             Capture Interval
                           </label>
                           <select
+                            value={captureInterval}
+                            onChange={handleIntervalChange}
                             className={`w-full px-4 py-2 rounded-lg ${
                               theme === "light"
                                 ? "bg-white border-gray-300"
                                 : "bg-slate-700 border-gray-600"
                             } focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all`}
                           >
-                            <option value="15">
+                            <option value="900000">
                               Every 15 minutes (Default)
                             </option>
-                            <option value="30">Every 2 minutes</option>
-                            <option value="60">Every 5 minute</option>
-                            <option value="300">Every 10 minutes</option>
+                            <option value="120000">Every 2 minutes</option>{" "}
+                            <option value="300000">Every 5 minutes</option>{" "}
+                            <option value="600000">Every 10 minutes</option>{" "}
                             <option value="custom">Custom interval</option>
                           </select>
                         </div>

@@ -13,6 +13,7 @@ import {
 import { SparklesCore } from "../ui/sparkles";
 import { CardContainer, CardBody, CardItem } from "../ui/3d-card";
 import customFetch from "../utils/customFetch";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -29,6 +30,86 @@ const Dashboard = () => {
   const [faceRecords, setFaceRecords] = useState([]);
   const [isLoadingFaces, setIsLoadingFaces] = useState(true);
   const [theme, setTheme] = useState("light");
+
+  // Add voice management functions
+  const updateVoicesForLanguage = (selectedLanguage) => {
+    const voices = window.speechSynthesis.getVoices();
+    const voiceSelect = document.getElementById('voice-select');
+    if (voiceSelect && voices.length > 0) {
+      // Filter voices for the selected language
+      const languageVoices = voices.filter(voice => voice.lang.startsWith(selectedLanguage));
+      const otherVoices = voices.filter(voice => !voice.lang.startsWith(selectedLanguage));
+      
+      // Create HTML for options
+      let optionsHTML = '<option value="">Select a voice...</option>';
+      
+      if (languageVoices.length > 0) {
+        optionsHTML += '<optgroup label="Matching Language Voices">';
+        languageVoices.forEach(voice => {
+          optionsHTML += '<option value="' + voice.name + '">' + 
+            voice.name + ' (' + voice.lang + ')</option>';
+        });
+        optionsHTML += '</optgroup>';
+      }
+      
+      if (otherVoices.length > 0) {
+        optionsHTML += '<optgroup label="Other Available Voices">';
+        otherVoices.forEach(voice => {
+          optionsHTML += '<option value="' + voice.name + '">' + 
+            voice.name + ' (' + voice.lang + ')</option>';
+        });
+        optionsHTML += '</optgroup>';
+      }
+      
+      voiceSelect.innerHTML = optionsHTML;
+      
+      // Try to select the best matching voice
+      const savedVoice = localStorage.getItem('selectedVoice');
+      if (savedVoice && voices.some(v => v.name === savedVoice)) {
+        voiceSelect.value = savedVoice;
+      } else if (languageVoices.length > 0) {
+        // If no saved voice, select the first matching language voice
+        voiceSelect.value = languageVoices[0].name;
+        localStorage.setItem('selectedVoice', languageVoices[0].name);
+      }
+    }
+  };
+
+  const initializeVoices = () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      const selectedLanguage = localStorage.getItem('selectedLanguage') || 'en-US';
+      updateVoicesForLanguage(selectedLanguage);
+    }
+  };
+
+  // Initialize voices when component mounts
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      // Force voice load
+      window.speechSynthesis.getVoices();
+      
+      // Set up event listener for when voices are loaded
+      window.speechSynthesis.onvoiceschanged = () => {
+        initializeVoices();
+      };
+      
+      // Try initial load
+      initializeVoices();
+      
+      // Retry after delays to ensure voices are loaded
+      const retryTimers = [
+        setTimeout(initializeVoices, 100),
+        setTimeout(initializeVoices, 500),
+        setTimeout(initializeVoices, 1000)
+      ];
+
+      // Cleanup timers on unmount
+      return () => {
+        retryTimers.forEach(timer => clearTimeout(timer));
+      };
+    }
+  }, []);
 
   useEffect(() => {
     // Get theme from localStorage or default to system preference
@@ -157,6 +238,78 @@ const Dashboard = () => {
       text: "Captured 200+ images during your vacation. Created a visual diary of your trip.",
     },
   ];
+
+  // Update the language selection handler
+  const handleLanguageChange = async (e) => {
+    const selectedLang = e.target.value;
+    localStorage.setItem('selectedLanguage', selectedLang);
+    
+    // Force voice reload for the new language
+    const voices = window.speechSynthesis.getVoices();
+    const matchingVoices = voices.filter(voice => voice.lang.startsWith(selectedLang));
+    
+    // If we have matching voices, select the first one by default
+    if (matchingVoices.length > 0) {
+      localStorage.setItem('selectedVoice', matchingVoices[0].name);
+    }
+    
+    // Update the voice selection dropdown
+    updateVoicesForLanguage(selectedLang);
+    
+    // Notify other components about the language change
+    window.dispatchEvent(new CustomEvent('voiceSettingsChanged', {
+      detail: { 
+        language: selectedLang,
+        voice: matchingVoices.length > 0 ? matchingVoices[0].name : null
+      }
+    }));
+
+    // Test the new language settings
+    const testMessage = getTestMessageForLanguage(selectedLang);
+    const utterance = new SpeechSynthesisUtterance(testMessage);
+    
+    // Apply the new language settings
+    utterance.lang = selectedLang;
+    if (matchingVoices.length > 0) {
+      utterance.voice = matchingVoices[0];
+    }
+    
+    // Apply saved rate and pitch
+    utterance.rate = parseFloat(localStorage.getItem('speechRate')) || 1;
+    utterance.pitch = parseFloat(localStorage.getItem('speechPitch')) || 1;
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    // Speak the test message
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Add function to get test message for each language
+  const getTestMessageForLanguage = (lang) => {
+    switch(lang) {
+      case 'ta-IN':
+        return "வணக்கம், இது ஒரு சோதனை செய்தி.";
+      case 'hi-IN':
+        return "नमस्ते, यह एक परीक्षण संदेश है।";
+      case 'te-IN':
+        return "నమస్కారం, ఇది ఒక పరీక్ష సందేశం.";
+      case 'kn-IN':
+        return "ನಮಸ್ಕಾರ, ಇದು ಪರೀಕ್ಷಾ ಸಂದೇಶ.";
+      case 'ml-IN':
+        return "നമസ്കാരം, ഇത് ഒരു പരീക്ഷണ സന്ദേശമാണ്.";
+      case 'mr-IN':
+        return "नमस्कार, हे एक चाचणी संदेश आहे.";
+      case 'gu-IN':
+        return "નમસ્તે, આ એક પરીક્ષણ સંદેશ છે.";
+      case 'bn-IN':
+        return "নমস্কার, এটি একটি পরীক্ষার বার্তা।";
+      case 'pa-IN':
+        return "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ, ਇਹ ਇੱਕ ਟੈਸਟ ਸੁਨੇਹਾ ਹੈ।";
+      default:
+        return "Hello, this is a test message.";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 p-2 sm:p-4 md:p-10 pt-2 md:pt-4 relative transition-colors duration-300">
@@ -611,6 +764,209 @@ const Dashboard = () => {
               </motion.div>
             </div>
 
+            {/* Speech Settings Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mt-8 relative z-10"
+            >
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v3.586l2.707-2.707a1 1 0 111.414 1.414L11.414 9H15a1 1 0 110 2h-3.586l3.293 3.293a1 1 0 01-1.414 1.414L10 12.414V16a1 1 0 11-2 0v-3.586l-3.293 3.293a1 1 0 01-1.414-1.414L6.586 11H3a1 1 0 110-2h3.586L3.293 5.707a1 1 0 011.414-1.414L8 7.586V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Speech Settings
+              </h3>
+
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300 relative">
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Language Selection - Moved to top for better UX */}
+                    <div className="relative z-20">
+                      <label htmlFor="language-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Speech Language
+                      </label>
+                      <select
+                        id="language-select"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-300 cursor-pointer"
+                        defaultValue={localStorage.getItem('selectedLanguage') || 'en-US'}
+                        onChange={handleLanguageChange}
+                      >
+                        <optgroup label="Indian Languages">
+                          <option value="hi-IN">Hindi</option>
+                          <option value="ta-IN">Tamil</option>
+                          <option value="te-IN">Telugu</option>
+                          <option value="kn-IN">Kannada</option>
+                          <option value="ml-IN">Malayalam</option>
+                          <option value="mr-IN">Marathi</option>
+                          <option value="gu-IN">Gujarati</option>
+                          <option value="bn-IN">Bengali</option>
+                          <option value="pa-IN">Punjabi</option>
+                        </optgroup>
+                        <optgroup label="English Variants">
+                          <option value="en-US">English (US)</option>
+                          <option value="en-GB">English (UK)</option>
+                          <option value="en-IN">English (India)</option>
+                        </optgroup>
+                        <optgroup label="Other Languages">
+                          <option value="es-ES">Spanish</option>
+                          <option value="fr-FR">French</option>
+                          <option value="de-DE">German</option>
+                          <option value="it-IT">Italian</option>
+                          <option value="ja-JP">Japanese</option>
+                          <option value="ko-KR">Korean</option>
+                          <option value="zh-CN">Chinese (Simplified)</option>
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    {/* Voice Selection */}
+                    <div className="relative z-20">
+                      <label htmlFor="voice-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Voice Selection
+                      </label>
+                      <select
+                        id="voice-select"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-300 cursor-pointer"
+                        defaultValue={localStorage.getItem('selectedVoice') || ''}
+                        onChange={(e) => {
+                          localStorage.setItem('selectedVoice', e.target.value);
+                          window.dispatchEvent(new CustomEvent('voiceSettingsChanged', {
+                            detail: { voice: e.target.value }
+                          }));
+                        }}
+                      >
+                        <option value="">Loading voices...</option>
+                      </select>
+                    </div>
+
+                    {/* Speech Rate */}
+                    <div className="relative z-20">
+                      <label htmlFor="speech-rate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Speech Rate
+                      </label>
+                      <input
+                        id="speech-rate"
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        defaultValue={localStorage.getItem('speechRate') || '1'}
+                        className="w-full cursor-pointer"
+                        onChange={(e) => {
+                          localStorage.setItem('speechRate', e.target.value);
+                          window.dispatchEvent(new CustomEvent('voiceSettingsChanged', {
+                            detail: { rate: e.target.value }
+                          }));
+                        }}
+                      />
+                      <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <span>Slower</span>
+                        <span>Normal</span>
+                        <span>Faster</span>
+                      </div>
+                    </div>
+
+                    {/* Speech Pitch */}
+                    <div className="relative z-20">
+                      <label htmlFor="speech-pitch" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Speech Pitch
+                      </label>
+                      <input
+                        id="speech-pitch"
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        defaultValue={localStorage.getItem('speechPitch') || '1'}
+                        className="w-full cursor-pointer"
+                        onChange={(e) => {
+                          localStorage.setItem('speechPitch', e.target.value);
+                          window.dispatchEvent(new CustomEvent('voiceSettingsChanged', {
+                            detail: { pitch: e.target.value }
+                          }));
+                        }}
+                      />
+                      <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <span>Lower</span>
+                        <span>Normal</span>
+                        <span>Higher</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Test Speech */}
+                  <div className="mt-6 relative z-20">
+                    <button
+                      onClick={() => {
+                        const selectedLanguage = localStorage.getItem('selectedLanguage') || 'en-US';
+                        
+                        // Create test message based on selected language
+                        let testMessage = "This is a test message to check the speech settings.";
+                        switch(selectedLanguage) {
+                          case 'ta-IN':
+                            testMessage = "வணக்கம், இது ஒரு சோதனை செய்தி.";
+                            break;
+                          case 'hi-IN':
+                            testMessage = "नमस्ते, यह एक परीक्षण संदेश है।";
+                            break;
+                          case 'te-IN':
+                            testMessage = "నమస్కారం, ఇది ఒక పరీక్ష సందేశం.";
+                            break;
+                          case 'kn-IN':
+                            testMessage = "ನಮಸ್ಕಾರ, ಇದು ಪರೀಕ್ಷಾ ಸಂದೇಶ.";
+                            break;
+                          case 'ml-IN':
+                            testMessage = "നമസ്കാരം, ഇത് ഒരു പരീക്ഷണ സന്ദേശമാണ്.";
+                            break;
+                          // Add more languages as needed
+                        }
+
+                        const testUtterance = new SpeechSynthesisUtterance(testMessage);
+                        
+                        // Get available voices
+                        const voices = speechSynthesis.getVoices();
+                        const savedVoice = localStorage.getItem('selectedVoice');
+                        
+                        // First try to find the saved voice
+                        if (savedVoice && voices.length > 0) {
+                          const voice = voices.find(v => v.name === savedVoice);
+                          if (voice) testUtterance.voice = voice;
+                        }
+                        
+                        // If no saved voice or it's not available, try to find a voice for the selected language
+                        if (!testUtterance.voice) {
+                          const languageVoices = voices.filter(v => v.lang.startsWith(selectedLanguage));
+                          if (languageVoices.length > 0) {
+                            testUtterance.voice = languageVoices[0];
+                          }
+                        }
+
+                        // Apply other settings
+                        testUtterance.rate = parseFloat(localStorage.getItem('speechRate')) || 1;
+                        testUtterance.pitch = parseFloat(localStorage.getItem('speechPitch')) || 1;
+                        testUtterance.lang = selectedLanguage;
+
+                        // Cancel any ongoing speech
+                        speechSynthesis.cancel();
+
+                        // Speak the test message
+                        speechSynthesis.speak(testUtterance);
+                      }}
+                      className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-300 cursor-pointer"
+                    >
+                      Test Speech Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
             {/* Recognized Faces Section */}
             <div className="mt-8">
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center">
@@ -633,7 +989,8 @@ const Dashboard = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300"
+                className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300 relative"
+                style={{ isolation: 'isolate' }}
               >
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors duration-300">
                   <div className="flex items-center">
@@ -783,27 +1140,35 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                <div className="bg-gray-50 dark:bg-slate-700 px-6 py-4 border-t border-gray-100 dark:border-gray-600 transition-colors duration-300">
+                <div className="bg-gray-50 dark:bg-slate-700 px-6 py-4 border-t border-gray-100 dark:border-gray-600 transition-colors duration-300 relative">
                   <div className="flex justify-between items-center">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Faces are automatically detected and recognized in your
                       captures
                     </p>
-                    <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center transition-colors duration-300">
-                      Manage Faces
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 ml-1"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
+                    <Link 
+                      to="/get-started/face-register" 
+                      className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors duration-300 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer relative"
+                      role="button"
+                      aria-label="Manage Faces"
+                      style={{ pointerEvents: 'auto', position: 'relative', zIndex: 50 }}
+                    >
+                      <span className="flex items-center">
+                        Manage Faces
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 ml-1"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </span>
+                    </Link>
                   </div>
                 </div>
               </motion.div>

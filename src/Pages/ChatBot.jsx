@@ -51,6 +51,8 @@ const ChatBot = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef(null);
   const menuRef = useRef(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentSpeakingId, setCurrentSpeakingId] = useState(null);
 
   // Theme detection
   useEffect(() => {
@@ -198,6 +200,227 @@ const ChatBot = () => {
     }
   };
 
+  // Add translation function
+  const translateText = async (text, targetLang) => {
+    try {
+      const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}&key=7af0189b27df62438c8a`);
+      const data = await response.json();
+      return data.responseData.translatedText || text;
+    } catch (error) {
+      console.error('Translation error:', error);
+      return text;
+    }
+  };
+
+  // Add a function to split text into chunks
+  const splitTextIntoChunks = (text, maxLength = 500) => {
+    const chunks = [];
+    let currentChunk = '';
+    
+    // Split by sentences first
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    
+    for (const sentence of sentences) {
+      if (currentChunk.length + sentence.length <= maxLength) {
+        currentChunk += sentence;
+      } else {
+        if (currentChunk) chunks.push(currentChunk);
+        currentChunk = sentence;
+      }
+    }
+    
+    if (currentChunk) chunks.push(currentChunk);
+    return chunks;
+  };
+
+  // Update the speakText function to handle speech toggling and switching
+  const speakText = async (text, messageId) => {
+    if ('speechSynthesis' in window) {
+      // If clicking the same message that's currently speaking, toggle speech
+      if (currentSpeakingId === messageId && isSpeaking) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+        setCurrentSpeakingId(null);
+        return;
+      }
+
+      // If a different message is speaking, stop it first
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+      }
+
+      // Get the selected language from localStorage
+      const selectedLanguage = localStorage.getItem('selectedLanguage') || 'en-US';
+      
+      // Split text into chunks
+      const textChunks = splitTextIntoChunks(text);
+      
+      // Translate each chunk
+      const translatedChunks = [];
+      for (const chunk of textChunks) {
+        let translatedText = chunk;
+        if (!selectedLanguage.startsWith('en')) {
+          try {
+            const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|${selectedLanguage.split('-')[0]}&key=7af0189b27df62438c8a`);
+            if (response.status === 429) {
+              console.warn('Translation API rate limit reached, using original text');
+              translatedText = chunk;
+            } else {
+              const data = await response.json();
+              if (data.responseData && data.responseData.translatedText) {
+                translatedText = data.responseData.translatedText;
+              } else {
+                console.warn('Translation failed, using original text:', chunk);
+                translatedText = chunk;
+              }
+            }
+          } catch (error) {
+            console.error('Translation error:', error);
+            // Use original text if translation fails
+            translatedText = chunk;
+          }
+        }
+        translatedChunks.push(translatedText);
+      }
+
+      // Get available voices
+      const voices = window.speechSynthesis.getVoices();
+      
+      // Try to find a voice matching the selected language
+      let selectedVoice = null;
+      if (selectedLanguage.startsWith('en')) {
+        // For English, try to find a matching voice
+        const matchingVoices = voices.filter(voice => voice.lang.startsWith(selectedLanguage));
+        if (matchingVoices.length > 0) {
+          selectedVoice = matchingVoices[0];
+        }
+      } else {
+        // For other languages, try to find a matching voice
+        const matchingVoices = voices.filter(voice => voice.lang.startsWith(selectedLanguage));
+        if (matchingVoices.length > 0) {
+          selectedVoice = matchingVoices[0];
+        } else {
+          // If no matching voice found, use the first available voice
+          selectedVoice = voices[0];
+        }
+      }
+      
+      // Apply saved settings
+      const savedRate = localStorage.getItem('speechRate');
+      const savedPitch = localStorage.getItem('speechPitch');
+
+      // Create and speak each chunk
+      let currentChunkIndex = 0;
+      
+      const speakNextChunk = () => {
+        if (currentChunkIndex >= translatedChunks.length) {
+          setIsSpeaking(false);
+          setCurrentSpeakingId(null);
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(translatedChunks[currentChunkIndex]);
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
+        utterance.rate = savedRate ? parseFloat(savedRate) : 1;
+        utterance.pitch = savedPitch ? parseFloat(savedPitch) : 1;
+        utterance.lang = selectedLanguage;
+
+        utterance.onend = () => {
+          currentChunkIndex++;
+          if (currentSpeakingId === messageId) { // Only continue if this is still the current message
+            speakNextChunk();
+          }
+        };
+
+        utterance.onerror = () => {
+          currentChunkIndex++;
+          if (currentSpeakingId === messageId) { // Only continue if this is still the current message
+            speakNextChunk();
+          }
+        };
+
+        if (currentChunkIndex === 0) {
+          setIsSpeaking(true);
+          setCurrentSpeakingId(messageId);
+        }
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      speakNextChunk();
+    }
+  };
+
+  // Update the message bubble to show speaking state
+  const renderMessageBubble = (message) => {
+    const isCurrentMessageSpeaking = currentSpeakingId === message.id;
+    
+    return (
+      <div
+        className={`chat-bubble relative ${
+          message.sender === "user"
+            ? "bg-blue-500 text-white"
+            : theme === "light"
+            ? "bg-white text-gray-800 border border-gray-200"
+            : "bg-gray-800 text-gray-200 border border-gray-700"
+        }`}
+      >
+        {message.sender === "bot" && message.userQuery && (
+          <div
+            className={`text-sm mb-2 ${
+              theme === "light" ? "text-gray-500" : "text-gray-400"
+            }`}
+          >
+            <div className="font-medium bg-blue-500 text-white px-2 py-1 rounded-md">
+              You asked: {message.userQuery}
+            </div>
+          </div>
+        )}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">{message.content}</div>
+          {message.sender === "bot" && (
+            <button
+              onClick={() => speakText(message.content, message.id)}
+              className={`flex-shrink-0 p-1.5 rounded-full transition-all duration-200 ${
+                isCurrentMessageSpeaking
+                  ? theme === "light"
+                    ? "bg-primary-100 text-primary-600"
+                    : "bg-primary-900 text-primary-400"
+                  : theme === "light"
+                  ? "hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                  : "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
+              }`}
+              title={isCurrentMessageSpeaking ? "Stop reading" : "Read aloud"}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d={isCurrentMessageSpeaking ? 
+                    "M6 18L18 6M6 6l12 12" : // Stop icon
+                    "M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" // Play icon
+                  }
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Update the handleSubmit function to translate bot responses
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
@@ -214,7 +437,7 @@ const ChatBot = () => {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      date: currentDate, // Add date field
+      date: currentDate,
     };
 
     // Add user message to chat immediately
@@ -244,19 +467,36 @@ const ChatBot = () => {
       } else if (response.data.message) {
         botResponse = response.data.message;
       } else {
-        botResponse =
-          "I couldn't find any memories matching your query. Try asking about a specific time and date, like 'what did I do today morning?' or 'what happened yesterday at 2 PM?'";
+        botResponse = "I couldn't find any memories matching your query. Try asking about a specific time and date, like 'what did I do today morning?' or 'what happened yesterday at 2 PM?'";
+      }
+
+      // Get the selected language
+      const selectedLanguage = localStorage.getItem('selectedLanguage') || 'en-US';
+      
+      // Translate the response if not in English
+      let translatedResponse = botResponse;
+      if (!selectedLanguage.startsWith('en')) {
+        try {
+          const translationResponse = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(botResponse)}&langpair=en|${selectedLanguage.split('-')[0]}&key=7af0189b27df62438c8a`);
+          const translationData = await translationResponse.json();
+          if (translationData.responseData && translationData.responseData.translatedText) {
+            translatedResponse = translationData.responseData.translatedText;
+          }
+        } catch (error) {
+          console.error('Translation error:', error);
+        }
       }
 
       const botMessage = {
         id: Date.now(),
-        content: botResponse,
+        content: translatedResponse,
+        originalContent: botResponse, // Store original English text
         sender: "bot",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        date: currentDate, // Add date field
+        date: currentDate,
         userQuery: userQuery,
       };
 
@@ -266,8 +506,7 @@ const ChatBot = () => {
       console.error("Error fetching response:", error);
       const errorMessage = {
         id: Date.now(),
-        content:
-          "I'm having trouble connecting to the server. Please check your connection and try again.",
+        content: "I'm having trouble connecting to the server. Please check your connection and try again.",
         sender: "bot",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -393,6 +632,51 @@ const ChatBot = () => {
     }
   };
 
+  // Add this useEffect to initialize voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = speechSynthesis.getVoices();
+      const voiceSelect = document.getElementById('voice-select');
+      if (voiceSelect) {
+        // Clear existing options
+        voiceSelect.innerHTML = '';
+        
+        // Add voices to select element
+        voices.forEach(voice => {
+          const option = document.createElement('option');
+          option.value = voice.name;
+          option.textContent = `${voice.name} (${voice.lang})`;
+          voiceSelect.appendChild(option);
+        });
+
+        // Set selected voice from localStorage if available
+        const savedVoice = localStorage.getItem('selectedVoice');
+        if (savedVoice) {
+          voiceSelect.value = savedVoice;
+        }
+      }
+    };
+
+    // Load voices when they become available
+    speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices(); // Initial load
+
+    // Listen for voice settings changes
+    const handleVoiceSettingsChange = (event) => {
+      const { voice, rate, pitch, language } = event.detail;
+      if (voice) localStorage.setItem('selectedVoice', voice);
+      if (rate) localStorage.setItem('speechRate', rate);
+      if (pitch) localStorage.setItem('speechPitch', pitch);
+      if (language) localStorage.setItem('selectedLanguage', language);
+    };
+
+    window.addEventListener('voiceSettingsChanged', handleVoiceSettingsChange);
+
+    return () => {
+      window.removeEventListener('voiceSettingsChanged', handleVoiceSettingsChange);
+    };
+  }, []);
+
   return (
     <div
       className={`h-[calc(100vh-64px)] flex flex-col md:flex-row ${
@@ -433,6 +717,32 @@ const ChatBot = () => {
         </svg>
       </button>
 
+      {/* Desktop Sidebar Toggle Button */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className={`hidden md:flex fixed top-1/2 -translate-y-1/2 ${isSidebarOpen ? 'left-[288px]' : 'left-0'} z-[1000] items-center justify-center w-6 h-24 ${
+          theme === "light"
+            ? "bg-primary-950 hover:bg-primary-800"
+            : "bg-gray-700 hover:bg-gray-600"
+        } text-white rounded-r-lg shadow-lg transition-all duration-300`}
+        aria-label="Toggle Sidebar"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+          className={`w-4 h-4 transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M8.25 4.5l7.5 7.5-7.5 7.5"
+          />
+        </svg>
+      </button>
+
       {/* Sidebar */}
       <AnimatePresence>
         {(isSidebarOpen || (!isSidebarOpen && window.innerWidth >= 768)) && (
@@ -441,11 +751,11 @@ const ChatBot = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className={`fixed md:static inset-y-0 left-0 transform md:translate-x-0 transition-transform duration-300 ease-in-out w-72 flex flex-col z-[999] h-full overflow-hidden ${
+            className={`fixed md:relative inset-y-0 left-0 transform md:translate-x-0 transition-transform duration-300 ease-in-out w-72 flex flex-col z-[999] h-full overflow-hidden ${
               theme === "light"
                 ? "bg-white border-r border-gray-200"
                 : "bg-gray-800 border-r border-gray-700"
-            }`}
+            } ${!isSidebarOpen && 'md:hidden'}`}
           >
             {/* Header Section */}
             <div className="flex-shrink-0 mt-16 md:mt-0">
@@ -821,30 +1131,7 @@ const ChatBot = () => {
                             </time>
                           )}
                         </div>
-                        <div
-                          className={`chat-bubble ${
-                            message.sender === "user"
-                              ? "bg-blue-500 text-white"
-                              : theme === "light"
-                              ? "bg-white text-gray-800 border border-gray-200"
-                              : "bg-gray-800 text-gray-200 border border-gray-700"
-                          }`}
-                        >
-                          {message.sender === "bot" && message.userQuery && (
-                            <div
-                              className={`text-sm mb-2 ${
-                                theme === "light"
-                                  ? "text-gray-500"
-                                  : "text-gray-400"
-                              }`}
-                            >
-                              <div className="font-medium bg-blue-500 text-white px-2 py-1 rounded-md">
-                                You asked: {message.userQuery}
-                              </div>
-                            </div>
-                          )}
-                          {message.content}
-                        </div>
+                        {renderMessageBubble(message)}
                       </div>
                     ))}
                   </div>

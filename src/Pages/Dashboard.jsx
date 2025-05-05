@@ -615,7 +615,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <HoverCard>
                     <HoverCardTrigger>
-                      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 p-6 rounded-xl text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-slate-800 dark:to-slate-900 p-6 rounded-xl text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="text-lg font-semibold mb-1">
@@ -625,7 +625,7 @@ const Dashboard = () => {
                               {captures.total || 0}
                             </p>
                           </div>
-                          <div className="bg-white/20 p-2 rounded-lg">
+                          <div className="bg-white/10 dark:bg-slate-700/50 p-2 rounded-lg">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               className="h-6 w-6"
@@ -649,13 +649,13 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="mt-4">
-                          <div className="w-full bg-white/20 h-2 rounded-full">
+                          <div className="w-full bg-white/20 dark:bg-slate-700/50 h-2 rounded-full">
                             <div
-                              className="bg-white h-2 rounded-full"
+                              className="bg-white dark:bg-blue-400 h-2 rounded-full"
                               style={{ width: "75%" }}
                             ></div>
                           </div>
-                          <p className="text-xs mt-1 text-blue-100">
+                          <p className="text-xs mt-1 text-blue-100 dark:text-blue-300">
                             75% more than last month
                           </p>
                         </div>
@@ -698,7 +698,7 @@ const Dashboard = () => {
 
                   <HoverCard>
                     <HoverCardTrigger>
-                      <div className="bg-gradient-to-br from-purple-500 to-pink-600 dark:from-purple-600 dark:to-pink-700 p-6 rounded-xl text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                      <div className="bg-gradient-to-br from-purple-600 to-pink-700 dark:from-slate-800 dark:to-slate-900 p-6 rounded-xl text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="text-lg font-semibold mb-1">
@@ -708,7 +708,7 @@ const Dashboard = () => {
                               {objects.totalObjectsCount || 0}
                             </p>
                           </div>
-                          <div className="bg-white/20 p-2 rounded-lg">
+                          <div className="bg-white/10 dark:bg-slate-700/50 p-2 rounded-lg">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               className="h-6 w-6"
@@ -726,13 +726,13 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="mt-4">
-                          <div className="w-full bg-white/20 h-2 rounded-full">
+                          <div className="w-full bg-white/20 dark:bg-slate-700/50 h-2 rounded-full">
                             <div
-                              className="bg-white h-2 rounded-full"
+                              className="bg-white dark:bg-purple-400 h-2 rounded-full"
                               style={{ width: "60%" }}
                             ></div>
                           </div>
-                          <p className="text-xs mt-1 text-purple-100">
+                          <p className="text-xs mt-1 text-purple-100 dark:text-purple-300">
                             60% of captures analyzed
                           </p>
                         </div>

@@ -363,7 +363,7 @@ const ChatBot = () => {
       <div
         className={`chat-bubble relative ${
           message.sender === "user"
-            ? "bg-blue-500 text-white"
+            ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
             : theme === "light"
             ? "bg-white text-gray-800 border border-gray-200"
             : "bg-gray-800 text-gray-200 border border-gray-700"
@@ -375,7 +375,7 @@ const ChatBot = () => {
               theme === "light" ? "text-gray-500" : "text-gray-400"
             }`}
           >
-            <div className="font-medium bg-blue-500 text-white px-2 py-1 rounded-md">
+            <div className="font-medium bg-gradient-to-r from-blue-600 to-violet-600 text-white px-2 py-1 rounded-md  border-gray-200">
               You asked: {message.userQuery}
             </div>
           </div>
@@ -388,8 +388,8 @@ const ChatBot = () => {
               className={`flex-shrink-0 p-1.5 rounded-full transition-all duration-200 ${
                 isCurrentMessageSpeaking
                   ? theme === "light"
-                    ? "bg-primary-100 text-primary-600"
-                    : "bg-primary-900 text-primary-400"
+                    ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                    : "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
                   : theme === "light"
                   ? "hover:bg-gray-100 text-gray-500 hover:text-gray-700"
                   : "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
@@ -408,8 +408,8 @@ const ChatBot = () => {
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d={isCurrentMessageSpeaking ? 
-                    "M6 18L18 6M6 6l12 12" : // Stop icon
-                    "M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" // Play icon
+                    "M6 18L18 6M6 6l12 12" : 
+                    "M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
                   }
                 />
               </svg>
@@ -1098,10 +1098,10 @@ const ChatBot = () => {
                           <div
                             className={`w-10 rounded-full ${
                               message.sender === "user"
-                                ? "bg-blue-500 text-white"
+                                ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
                                 : theme === "light"
-                                ? "bg-primary-600 text-white"
-                                : "bg-primary-800 text-white"
+                                ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                                : "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
                             }`}
                           >
                             <span>
@@ -1144,8 +1144,8 @@ const ChatBot = () => {
                     <div
                       className={`w-10 rounded-full ${
                         theme === "light"
-                          ? "bg-primary-600 text-white"
-                          : "bg-primary-800 text-white"
+                          ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                          : "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
                       }`}
                     >
                       <span>{aiName[0]}</span>
@@ -1238,8 +1238,8 @@ const ChatBot = () => {
                     isListening
                       ? "bg-red-500 text-white"
                       : theme === "light"
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      : "bg-gray-700 text-gray-200 hover:bg-gray-600"
+                      ? "bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white"
+                      : "bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white"
                   } transition-colors`}
                   title={isListening ? "Stop listening" : "Start voice input"}
                 >
@@ -1256,8 +1256,8 @@ const ChatBot = () => {
                         ? "bg-gray-100 text-gray-400"
                         : "bg-gray-700 text-gray-500"
                       : theme === "light"
-                      ? "bg-primary-600 hover:bg-primary-700 text-white"
-                      : "bg-primary-700 hover:bg-primary-600 text-white"
+                      ? "bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white"
+                      : "bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white"
                   } transition-colors`}
                 >
                   {isTyping ? (

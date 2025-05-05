@@ -297,13 +297,13 @@ Feel free to ask me anything! I'm here to assist you.`,
                 <div
                   className={`backdrop-blur-sm px-4 py-1.5 rounded-full ${
                     theme === "light"
-                      ? "bg-primary-50 border border-primary-100"
+                      ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
                       : "bg-gray-800 border border-gray-700"
                   }`}
                 >
                   <span
                     className={`text-sm font-medium ${
-                      theme === "light" ? "text-primary-800" : "text-gray-200"
+                      theme === "light" ? "text-white" : "text-gray-200"
                     }`}
                   >
                     {formatDate(date)}
@@ -325,10 +325,10 @@ Feel free to ask me anything! I'm here to assist you.`,
                     <div
                       className={`w-10 rounded-full ${
                         message.sender === "user"
-                          ? "bg-blue-500 text-white"
+                          ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
                           : theme === "light"
-                          ? "bg-primary-600 text-white"
-                          : "bg-primary-800 text-white"
+                          ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                          : "bg-gray-800 text-white"
                       }`}
                     >
                       <span>
@@ -356,7 +356,7 @@ Feel free to ask me anything! I'm here to assist you.`,
                   <div
                     className={`chat-bubble ${
                       message.sender === "user"
-                        ? "bg-blue-500 text-white"
+                        ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
                         : theme === "light"
                         ? "bg-white text-gray-800 border border-gray-200"
                         : "bg-gray-800 text-gray-200 border border-gray-700"
@@ -376,8 +376,8 @@ Feel free to ask me anything! I'm here to assist you.`,
               <div
                 className={`w-10 rounded-full ${
                   theme === "light"
-                    ? "bg-primary-600 text-white"
-                    : "bg-primary-800 text-white"
+                    ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                    : "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
                 }`}
               >
                 <span>{aiName[0]}</span>
@@ -418,8 +418,8 @@ Feel free to ask me anything! I'm here to assist you.`,
             placeholder="Ask me anything..."
             className={`flex-1 px-4 py-3 rounded-xl border ${
               theme === "light"
-                ? "bg-white border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 text-gray-800 placeholder-gray-400"
-                : "bg-gray-700 border-gray-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-700 text-gray-100 placeholder-gray-500"
+                ? "bg-white border-gray-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 text-gray-800 placeholder-gray-400"
+                : "bg-gray-700 border-gray-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-700 text-gray-100 placeholder-gray-500"
             } focus:outline-none transition-all`}
           />
 
@@ -431,8 +431,8 @@ Feel free to ask me anything! I'm here to assist you.`,
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-gray-700 text-gray-500 cursor-not-allowed"
                 : theme === "light"
-                ? "bg-primary-600 hover:bg-primary-700 text-white"
-                : "bg-primary-700 hover:bg-primary-600 text-white"
+                ? "bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white"
+                : "bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white"
             }`}
             disabled={!inputMessage.trim() || isTyping}
           >

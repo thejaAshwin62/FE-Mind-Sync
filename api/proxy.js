@@ -1,10 +1,7 @@
 import { createProxyMiddleware } from "http-proxy-middleware";
-import dotenv from "dotenv";
-
-dotenv.config(); // Load env variables from .env
 
 const apiProxy = createProxyMiddleware({
-  target: process.env.VITE_API_BASE_URL || "http://localhost:5000", // Fallback if not defined
+  target: "https://emb-service.onrender.com",
   changeOrigin: true,
   pathRewrite: { "^/api/v1": "/api/v1" },
   onProxyRes: function (proxyRes) {
